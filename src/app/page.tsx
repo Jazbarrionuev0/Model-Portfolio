@@ -1,19 +1,15 @@
-import AboutMe from "@/components/screens/AboutMe";
+import { Campaigns } from "@/components/Campaigns";
 import Contact from "@/components/screens/Contact";
-import GoToPortfolio from "@/components/screens/GoToPortfolio";
 import HomePage from "@/components/screens/Home";
 import Photos from "@/components/screens/Photos";
 
-
-export default function Home() {
+export default async function Home() {
   return (
-    <main className="">
+    <main>
       <HomePage />
       <Photos />
-      <AboutMe />
-      <GoToPortfolio />
+      <Campaigns />
       <Contact />
-
     </main>
   );
 }
