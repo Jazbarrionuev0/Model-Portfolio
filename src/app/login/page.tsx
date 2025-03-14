@@ -64,7 +64,7 @@ export default function UploadPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-dvh flex items-center justify-center bg-gray-50">
         <div className="p-8 bg-white rounded-lg shadow-md w-full max-w-md">
           <div className="flex flex-col items-center space-y-4">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>

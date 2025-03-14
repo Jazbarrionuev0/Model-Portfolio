@@ -36,12 +36,9 @@ const Page = () => {
     const file = e.target.files?.[0];
     if (file) {
       try {
-        // Create FormData and append file
         const formData = new FormData();
         formData.append("file", file);
         formData.append("type", type);
-
-        console.log("Uploading file:", formData.get("file")); // Log the file being uploaded
 
         const newImage = await uploadImage(file, type);
         if (type === "hero") {
