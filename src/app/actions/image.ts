@@ -5,6 +5,7 @@ import { Image } from "@/types/image";
 import { writeFile, readFile } from "fs/promises";
 import { join } from "path";
 import sharp from "sharp";
+import { promises as fs } from "fs";
 
 const DB_PATH = join(process.cwd(), "data", "db.json");
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB in bytes
@@ -53,7 +54,7 @@ async function compressImage(buffer: Buffer, imageName: string): Promise<Buffer>
   }
 }
 
-export async function uploadImage(file: File, type: "hero" | "carousel"): Promise<Image> {
+async function saveImage(file: File, type: "hero" | "carousel"): Promise<Image> {
   try {
     // Check file size
     if (file.size > MAX_FILE_SIZE) {
@@ -97,10 +98,21 @@ export async function uploadImage(file: File, type: "hero" | "carousel"): Promis
       throw new Error("Created buffer is empty");
     }
 
+    const uploadsDir = join(process.cwd(), "public/uploads");
+
+    // Check if the uploads directory exists, if not, create it
+    try {
+      await fs.access(uploadsDir);
+    } catch (error) {
+      console.error("Error accessing uploads directory:", error);
+      // Directory does not exist, create it
+      await fs.mkdir(uploadsDir, { recursive: true });
+    }
+
     // Create unique filename
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
     const filename = `${uniqueSuffix}-${file.name.replace(/\.[^/.]+$/, "")}.jpg`;
-    const path = join(process.cwd(), "public/uploads", filename);
+    const path = join(uploadsDir, filename);
 
     // Compress and save image
     const compressedBuffer = await compressImage(buffer, filename);
@@ -137,6 +149,10 @@ export async function uploadImage(file: File, type: "hero" | "carousel"): Promis
     console.error("Error uploading image:", error);
     throw error;
   }
+}
+
+export async function uploadImage(file: File, type: "hero" | "carousel"): Promise<Image> {
+  return await saveImage(file, type);
 }
 
 export async function deleteImage(id: string): Promise<void> {
