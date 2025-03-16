@@ -1,79 +1,200 @@
 "use client";
+
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { createCampaign } from "@/app/actions/campaigns";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { createCampaignSchema } from "@/schemas/campaign.schema";
+import { createCampaign } from "@/app/actions/campaigns";
+import { Campaign } from "@/types/campaign";
+import { Image as ImageType } from "@/types/image";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Image as ImageType } from "@/types/image";
-import { type z } from "zod";
 import Image from "next/image";
-import { PlusCircle } from "lucide-react";
 
-type FormData = z.infer<typeof createCampaignSchema>;
+// Helper functions for consistent logging
+function logInfo(message: string, data?: Record<string, unknown>): void {
+  console.log(`[CAMPAIGN_FORM_INFO] ${message}`, data ? JSON.stringify(data) : "");
+}
 
-const NewCampaignPage = () => {
+function logError(message: string, error: unknown): void {
+  console.error(`[CAMPAIGN_FORM_ERROR] ${message}`, error);
+  // Log additional error details if available
+  if (error instanceof Error) {
+    console.error(`[CAMPAIGN_FORM_ERROR_DETAILS] ${error.name}: ${error.message}`);
+    console.error(`[CAMPAIGN_FORM_ERROR_STACK] ${error.stack}`);
+  } else if (typeof error === "object" && error !== null) {
+    console.error("[CAMPAIGN_FORM_ERROR_OBJECT]", JSON.stringify(error, null, 2));
+  }
+}
+
+export default function NewCampaignPage() {
   const router = useRouter();
+  const [date, setDate] = useState<Date>(new Date());
 
-  const form = useForm<FormData>({
+  // Log component initialization
+  useEffect(() => {
+    logInfo("NewCampaignPage component initialized", {
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV,
+      isVercel: typeof window !== 'undefined' && window.location.hostname.includes('vercel.app'),
+    });
+  }, []);
+
+  const form = useForm<Omit<Campaign, "id">>({
     resolver: zodResolver(createCampaignSchema),
     defaultValues: {
       brand: {
         name: "",
+        link: "",
         logo: {
-          id: Date.now(),
-          url: undefined,
+          id: 0,
+          url: "",
           alt: "",
           type: "hero",
         },
-        link: "",
       },
       description: "",
       image: {
-        id: Date.now(),
+        id: 0,
         url: "",
         alt: "",
         type: "hero",
       },
-      images: [] as ImageType[],
+      images: [],
       date: new Date(),
     },
   });
 
-  const onSubmit = async (data: FormData) => {
+  useEffect(() => {
+    if (date) {
+      logInfo("Date changed", { newDate: date.toISOString() });
+      form.setValue("date", date);
+    }
+  }, [date, form]);
+
+  const onSubmit = async (data: Omit<Campaign, "id">) => {
+    logInfo("Form submission started", {
+      brandName: data.brand.name,
+      hasLogo: !!data.brand.logo?.url,
+      hasMainImage: !!data.image?.url,
+      additionalImagesCount: data.images?.length,
+    });
+
     try {
+      // Validate required fields
+      if (!data.brand.name) {
+        logError("Validation error: Brand name is required", null);
+        form.setError("brand.name", { message: "Brand name is required" });
+        return;
+      }
+
+      if (!data.brand.logo?.url) {
+        logError("Validation error: Brand logo is required", null);
+        form.setError("brand.logo", { message: "Brand logo is required" });
+        return;
+      }
+
+      if (!data.image?.url) {
+        logError("Validation error: Main image is required", null);
+        form.setError("image", { message: "Main image is required" });
+        return;
+      }
+
+      // Format Instagram username if needed
       const username = data.brand.link;
-      data.brand.link = "https://www.instagram.com/" + username;
-      await createCampaign(data);
+      if (username && !username.startsWith("https://www.instagram.com/")) {
+        data.brand.link = "https://www.instagram.com/" + username;
+      }
+      
+      logInfo("Submitting campaign data to server", {
+        brandName: data.brand.name,
+        formattedLink: data.brand.link,
+        logoDataLength: data.brand.logo.url ? (data.brand.logo.url as string).length : 0,
+        mainImageDataLength: data.image.url ? (data.image.url as string).length : 0,
+        additionalImagesCount: data.images?.length || 0
+      });
+
+      // Create campaign
+      const result = await createCampaign(data);
+      
+      logInfo("Campaign created successfully", { 
+        campaignId: result.id,
+        timestamp: new Date().toISOString() 
+      });
+      
       router.push("/campaigns");
     } catch (error) {
+      logError("Error creating campaign", error);
+      
+      // Try to extract more detailed error information
+      let errorMessage = "Error creating campaign";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+        
+        // Log additional details about the form state
+        logError("Form state at time of error", {
+          formValues: form.getValues(),
+          formErrors: form.formState.errors,
+          isDirty: form.formState.isDirty,
+          isSubmitting: form.formState.isSubmitting,
+        });
+      }
+      
       form.setError("root", {
-        message: error instanceof Error ? error.message : "Error creating campaign",
+        message: errorMessage,
       });
     }
   };
 
   const handleAddImage = () => {
+    logInfo("Adding additional image initiated");
+    
     const fileInput = document.createElement("input");
     fileInput.type = "file";
     fileInput.accept = "image/*";
     fileInput.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
+        logInfo("File selected for additional image", {
+          fileName: file.name,
+          fileType: file.type,
+          fileSize: file.size,
+        });
+        
         const reader = new FileReader();
         reader.onload = () => {
+          logInfo("File read completed for additional image");
+          
           const newImage: ImageType = {
             id: Date.now(),
             url: reader.result as string,
             alt: file.name,
             type: "carousel",
           };
+          
           const currentImages = form.getValues("images");
           form.setValue("images", [...currentImages, newImage]);
+          
+          logInfo("Additional image added to form", {
+            imageId: newImage.id,
+            totalImagesCount: currentImages.length + 1,
+          });
         };
+        
+        reader.onerror = (error) => {
+          logError("Error reading file for additional image", error);
+        };
+        
         reader.readAsDataURL(file);
       }
     };
@@ -111,10 +232,27 @@ const NewCampaignPage = () => {
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file) {
+                        logInfo("Brand logo file selected", {
+                          fileName: file.name,
+                          fileType: file.type,
+                          fileSize: file.size,
+                        });
+                        
                         const reader = new FileReader();
                         reader.onload = () => {
-                          form.setValue("brand.logo.url", reader.result as string);
+                          logInfo("Brand logo file read completed");
+                          form.setValue("brand.logo", {
+                            id: Date.now(),
+                            url: reader.result as string,
+                            alt: file.name,
+                            type: "hero",
+                          });
                         };
+                        
+                        reader.onerror = (error) => {
+                          logError("Error reading brand logo file", error);
+                        };
+                        
                         reader.readAsDataURL(file);
                       }
                     }}
@@ -138,9 +276,9 @@ const NewCampaignPage = () => {
             name="brand.link"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nombre de la cuenta de Instagram de la Marca</FormLabel>
+                <FormLabel>Instagram de la Marca</FormLabel>
                 <FormControl>
-                  <Input placeholder="nombre_de_la_cuenta" {...field} />
+                  <Input placeholder="@username" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -154,7 +292,7 @@ const NewCampaignPage = () => {
               <FormItem>
                 <FormLabel>Descripción</FormLabel>
                 <FormControl>
-                  <Textarea placeholder="Descripción de la campaña..." {...field} rows={4} />
+                  <Textarea placeholder="Ingrese la descripción" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -163,7 +301,31 @@ const NewCampaignPage = () => {
 
           <FormField
             control={form.control}
-            name="image.url"
+            name="date"
+            render={({}) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Fecha</FormLabel>
+                <FormControl>
+                  <Input
+                    type="date"
+                    value={date ? date.toISOString().split("T")[0] : ""}
+                    onChange={(e) => {
+                      const newDate = e.target.value ? new Date(e.target.value) : new Date();
+                      setDate(newDate);
+                      if (newDate) {
+                        logInfo("Date selected", { date: newDate.toISOString() });
+                      }
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="image"
             render={({}) => (
               <FormItem>
                 <FormLabel>Imagen Principal</FormLabel>
@@ -174,14 +336,27 @@ const NewCampaignPage = () => {
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file) {
+                        logInfo("Main image file selected", {
+                          fileName: file.name,
+                          fileType: file.type,
+                          fileSize: file.size,
+                        });
+                        
                         const reader = new FileReader();
                         reader.onload = () => {
+                          logInfo("Main image file read completed");
                           form.setValue("image", {
-                            ...form.getValues("image"),
+                            id: Date.now(),
                             url: reader.result as string,
                             alt: form.getValues("description") || file.name,
+                            type: "hero",
                           });
                         };
+                        
+                        reader.onerror = (error) => {
+                          logError("Error reading main image file", error);
+                        };
+                        
                         reader.readAsDataURL(file);
                       }
                     }}
@@ -212,6 +387,7 @@ const NewCampaignPage = () => {
                     type="button"
                     className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                     onClick={() => {
+                      logInfo("Removing additional image", { imageIndex: index, imageId: image.id });
                       const currentImages = form.getValues("images");
                       form.setValue(
                         "images",
@@ -229,57 +405,29 @@ const NewCampaignPage = () => {
                   </button>
                 </div>
               ))}
-
-              {/* Add Image Button */}
               <button
                 type="button"
+                className="aspect-square rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:border-gray-400 transition-colors"
                 onClick={handleAddImage}
-                className="aspect-square rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors"
               >
-                <PlusCircle className="h-8 w-8 text-gray-400" />
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
               </button>
-
-              {/* Empty placeholder slots */}
-              {[...Array(Math.max(0, 3 - form.watch("images").length))].map((_, i) => (
-                <div key={`empty-${i}`} className="aspect-square rounded-lg border-2 border-dashed border-gray-200 bg-gray-50" />
-              ))}
             </div>
           </div>
 
-          <FormField
-            control={form.control}
-            name="date"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Fecha</FormLabel>
-                <FormControl>
-                  <Input
-                    type="date"
-                    value={field.value instanceof Date ? field.value.toISOString().split("T")[0] : ""}
-                    onChange={(e) => field.onChange(new Date(e.target.value))}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
           {form.formState.errors.root && (
-            <div className="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">{form.formState.errors.root.message}</div>
+            <div className="p-4 bg-red-50 text-red-600 rounded-md">
+              {form.formState.errors.root.message}
+            </div>
           )}
 
-          <div className="flex justify-end gap-2 mt-6">
-            <Button type="button" variant="ghost" onClick={() => router.push("/campaigns")}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? "Creando..." : "Crear Campaña"}
-            </Button>
-          </div>
+          <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+            {form.formState.isSubmitting ? "Creando..." : "Crear Campaña"}
+          </Button>
         </form>
       </Form>
     </div>
   );
-};
-
-export default NewCampaignPage;
+}

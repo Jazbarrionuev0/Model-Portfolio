@@ -13,18 +13,24 @@ const Page = () => {
   const [editingImage, setEditingImage] = useState<ImageType | null>(null);
   const [newAlt, setNewAlt] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [uploadStatus, setUploadStatus] = useState<{ status: 'idle' | 'uploading' | 'success' | 'error', message?: string }>({ status: 'idle' });
 
   useEffect(() => {
     const loadImages = async () => {
       try {
         setIsLoading(true);
+        console.log("[CLIENT] Loading hero images");
         const images = await getHeroImagesAction();
         setHeroImages(images);
+        console.log("[CLIENT] Hero images loaded:", images.length);
 
+        console.log("[CLIENT] Loading carousel images");
         const carouselImages = await getCarouselImages();
         setCarouselImages(carouselImages);
+        console.log("[CLIENT] Carousel images loaded:", carouselImages.length);
       } catch (error) {
-        console.error("Error loading images:", error);
+        console.error("[CLIENT_ERROR] Error loading images:", error);
+        setError("Failed to load images. Please refresh the page.");
       } finally {
         setIsLoading(false);
       }
@@ -36,26 +42,64 @@ const Page = () => {
     const file = e.target.files?.[0];
     if (file) {
       try {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("type", type);
+        setUploadStatus({ status: 'uploading', message: `Uploading ${file.name}...` });
+        console.log(`[CLIENT] Starting upload of ${type} image:`, {
+          fileName: file.name,
+          fileType: file.type,
+          fileSize: file.size,
+          lastModified: new Date(file.lastModified).toISOString()
+        });
 
+        // Reset the error state
+        setError(null);
+
+        console.log("[CLIENT] Calling uploadImage action");
         const newImage = await uploadImage(file, type);
+        console.log("[CLIENT] Upload successful:", newImage);
+
         if (type === "hero") {
           setHeroImages([...heroImages, newImage]);
         } else {
           setCarouselImages([...carouselImages, newImage]);
         }
+        
+        setUploadStatus({ status: 'success', message: 'Upload successful!' });
+        
+        // Reset the file input
+        e.target.value = '';
+        
+        // Clear success message after 3 seconds
+        setTimeout(() => {
+          setUploadStatus({ status: 'idle' });
+        }, 3000);
       } catch (error) {
-        console.error("Error uploading image:", error);
+        console.error("[CLIENT_ERROR] Error uploading image:", error);
+        
+        let errorMessage = "Failed to upload image. Please try again.";
+        
+        // Detailed error logging
         if (error instanceof Response) {
-          const errorText = await error.text(); // Log the error response text
-          console.error("Server response:", errorText);
+          try {
+            const errorText = await error.text();
+            console.error("[CLIENT_ERROR] Server response:", errorText);
+            errorMessage = `Server error: ${error.status} ${error.statusText}. Details: ${errorText}`;
+          } catch (textError) {
+            console.error("[CLIENT_ERROR] Failed to read error response text:", textError);
+          }
         } else if (error instanceof Error) {
-          console.error("Error message:", error.message); // Log the error message
+          console.error("[CLIENT_ERROR] Error message:", error.message);
+          console.error("[CLIENT_ERROR] Error stack:", error.stack);
+          errorMessage = `Error: ${error.message}`;
         } else {
-          console.error("Unexpected error:", error); // Log unexpected errors
+          console.error("[CLIENT_ERROR] Unexpected error type:", typeof error);
+          console.error("[CLIENT_ERROR] Stringified error:", JSON.stringify(error));
         }
+        
+        setError(errorMessage);
+        setUploadStatus({ status: 'error', message: errorMessage });
+        
+        // Reset the file input
+        e.target.value = '';
       }
     }
   };
@@ -65,15 +109,26 @@ const Page = () => {
 
     try {
       setError(null);
+      console.log(`[CLIENT] Deleting ${type} image with ID:`, id);
       await deleteImage(id.toString());
+      console.log(`[CLIENT] Successfully deleted image with ID:`, id);
+      
       if (type === "hero") {
         setHeroImages(heroImages.filter((img) => img.id !== id));
       } else {
         setCarouselImages(carouselImages.filter((img) => img.id !== id));
       }
     } catch (error) {
-      console.error("Error deleting image:", error);
-      setError(error instanceof Error ? error.message : "Error deleting image");
+      console.error("[CLIENT_ERROR] Error deleting image:", error);
+      let errorMessage = "Error deleting image";
+      
+      if (error instanceof Error) {
+        console.error("[CLIENT_ERROR] Error message:", error.message);
+        console.error("[CLIENT_ERROR] Error stack:", error.stack);
+        errorMessage = error.message;
+      }
+      
+      setError(errorMessage);
     }
   };
 
@@ -85,7 +140,10 @@ const Page = () => {
   const handleSaveEdit = async () => {
     if (editingImage) {
       try {
+        console.log(`[CLIENT] Updating alt text for image ID:`, editingImage.id);
         const updatedImage = await updateImageAlt(editingImage.id.toString(), newAlt);
+        console.log(`[CLIENT] Successfully updated alt text:`, updatedImage);
+        
         if (editingImage.type === "hero") {
           setHeroImages(heroImages.map((img) => (img.id === updatedImage.id ? updatedImage : img)));
         } else {
@@ -93,7 +151,15 @@ const Page = () => {
         }
         setEditingImage(null);
       } catch (error) {
-        console.error("Error updating image:", error);
+        console.error("[CLIENT_ERROR] Error updating image:", error);
+        let errorMessage = "Error updating image";
+        
+        if (error instanceof Error) {
+          console.error("[CLIENT_ERROR] Error message:", error.message);
+          errorMessage = error.message;
+        }
+        
+        setError(errorMessage);
       }
     }
   };
@@ -111,12 +177,32 @@ const Page = () => {
   return (
     <div className="p-8 max-w-7xl mx-auto">
       {error && <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">{error}</div>}
+      
+      {uploadStatus.status === 'uploading' && (
+        <div className="mb-4 p-4 bg-blue-100 border border-blue-400 text-blue-700 rounded-lg flex items-center">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700 mr-2"></div>
+          {uploadStatus.message}
+        </div>
+      )}
+      
+      {uploadStatus.status === 'success' && (
+        <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
+          {uploadStatus.message}
+        </div>
+      )}
+      
       <div className="mb-12">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-800">Hero</h2>
           <label className="bg-blue-500 text-white px-4 py-2 rounded-lg cursor-pointer hover:bg-blue-600 transition-colors">
             Agregar Imágen
-            <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, "hero")} />
+            <input 
+              type="file" 
+              accept="image/*" 
+              className="hidden" 
+              onChange={(e) => handleFileUpload(e, "hero")} 
+              disabled={uploadStatus.status === 'uploading'}
+            />
           </label>
         </div>
         {heroImages.length === 0 ? (
@@ -161,7 +247,13 @@ const Page = () => {
           <h2 className="text-2xl font-bold text-gray-800">Carousel</h2>
           <label className="bg-blue-500 text-white px-4 py-2 rounded-lg cursor-pointer hover:bg-blue-600 transition-colors">
             Agregar Imágen
-            <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, "carousel")} />
+            <input 
+              type="file" 
+              accept="image/*" 
+              className="hidden" 
+              onChange={(e) => handleFileUpload(e, "carousel")} 
+              disabled={uploadStatus.status === 'uploading'}
+            />
           </label>
         </div>
         {carouselImages.length === 0 ? (
@@ -200,23 +292,28 @@ const Page = () => {
         )}
       </div>
 
-      {/* Edit Modal */}
       {editingImage && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full">
-            <h3 className="text-xl font-bold mb-4">Editar Texto Alt</h3>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-xl font-bold mb-4">Editar Alt Text</h3>
             <input
               type="text"
               value={newAlt}
               onChange={(e) => setNewAlt(e.target.value)}
-              className="w-full p-2 border rounded-lg mb-4"
-              placeholder="Enter alt text"
+              className="w-full p-2 border border-gray-300 rounded-lg mb-4"
+              placeholder="Alt text"
             />
             <div className="flex justify-end gap-2">
-              <button onClick={() => setEditingImage(null)} className="px-4 py-2 text-gray-600 hover:text-gray-800">
+              <button
+                onClick={() => setEditingImage(null)}
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+              >
                 Cancelar
               </button>
-              <button onClick={handleSaveEdit} className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+              <button
+                onClick={handleSaveEdit}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              >
                 Guardar
               </button>
             </div>

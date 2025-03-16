@@ -44,6 +44,18 @@ const nextConfig: NextConfig = {
         port: "",
         pathname: "/api/images/**",
       },
+      {
+        protocol: "https",
+        hostname: "neopixel.nyc3.cdn.digitaloceanspaces.com",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "neopixel.nyc3.digitaloceanspaces.com",
+        port: "",
+        pathname: "/**",
+      },
     ],
   },
 };
