@@ -2,6 +2,7 @@ import { createClient } from "redis";
 import { Image } from "@/types/image";
 import { Campaign } from "@/types/campaign";
 import { deleteImageAction } from "@/actions/delete";
+import { Profile } from "@/types/profile";
 
 const redis = createClient({ url: process.env.REDIS_URL! });
 redis.connect().catch(console.error);
@@ -108,3 +109,20 @@ export const deleteCampaign = async (id: number): Promise<void> => {
   }
   await redis.set("campaigns", JSON.stringify(campaigns));
 };
+
+export const getProfile = async (): Promise<Profile | null> => {
+  const data = await redis.get("profile");
+  return data ? JSON.parse(data) : null;
+};
+
+export const createProfile = async (profile: Profile): Promise<Profile> => {
+  await redis.set("profile", JSON.stringify(profile));
+  return profile;
+};
+
+export const updateProfile = async (profile: Profile): Promise<Profile> => {
+  await redis.set("profile", JSON.stringify(profile));
+  return profile;
+};
+
+

@@ -15,15 +15,26 @@ export default function Header() {
             </Link>
           </li>
           <li className="w-full sm:w-auto">
-            <Link href="/campaigns" className="block text-center sm:inline-block w-full text-gray-700 hover:text-blue-600 font-medium transition-colors px-3 py-2 rounded-md hover:bg-gray-50">
+            <Link
+              href="/campaigns"
+              className="block text-center sm:inline-block w-full text-gray-700 hover:text-blue-600 font-medium transition-colors px-3 py-2 rounded-md hover:bg-gray-50"
+            >
               Campañas
             </Link>
           </li>
           <li className="w-full sm:w-auto">
-            <Link href="/images" className="block text-center sm:inline-block w-full text-gray-700 hover:text-blue-600 font-medium transition-colors px-3 py-2 rounded-md hover:bg-gray-50">
+            <Link
+              href="/images"
+              className="block text-center sm:inline-block w-full text-gray-700 hover:text-blue-600 font-medium transition-colors px-3 py-2 rounded-md hover:bg-gray-50"
+            >
               Imágenes
             </Link>
           </li>
+          {/* <li className="w-full sm:w-auto">
+            <Link href="/profile" className="block text-center sm:inline-block w-full text-gray-700 hover:text-blue-600 font-medium transition-colors px-3 py-2 rounded-md hover:bg-gray-50">
+              Perfil
+            </Link>
+          </li> */}
         </ul>
       </nav>
     </header>

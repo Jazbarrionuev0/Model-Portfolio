@@ -12,9 +12,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (path !== "/" && !cookie) {
-    return NextResponse.redirect(new URL("/", request.url));
-  }
+  // if (path !== "/" && !cookie) {
+  //   return NextResponse.redirect(new URL("/", request.url));
+  // }
 
   if (path === "/login" && cookie) {
     return NextResponse.redirect(new URL("/images", request.url));
