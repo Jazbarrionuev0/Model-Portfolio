@@ -1,5 +1,5 @@
 "use client";
-import { getCookie } from "@/app/actions";
+import { getCookie } from "@/actions/cookie";
 import { lato } from "@/fonts/fonts";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";

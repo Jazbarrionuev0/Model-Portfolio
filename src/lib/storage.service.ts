@@ -1,20 +1,6 @@
+import { Image } from "@/types/image";
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
-
-// Helper functions for consistent logging
-function logInfo(message: string, data?: Record<string, unknown>): void {
-  console.log(`[STORAGE_SERVICE_INFO] ${message}`, data ? JSON.stringify(data) : '');
-}
-
-function logError(message: string, error: unknown): void {
-  console.error(`[STORAGE_SERVICE_ERROR] ${message}`, error);
-  // Log additional error details if available
-  if (error instanceof Error) {
-    console.error(`[STORAGE_SERVICE_ERROR_DETAILS] ${error.name}: ${error.message}`);
-    console.error(`[STORAGE_SERVICE_ERROR_STACK] ${error.stack}`);
-  } else if (typeof error === 'object' && error !== null) {
-    console.error('[STORAGE_SERVICE_ERROR_OBJECT]', JSON.stringify(error, null, 2));
-  }
-}
+import { logError, logInfo } from "./utils";
 
 class StorageService {
   private s3Client: S3Client;
@@ -29,9 +15,9 @@ class StorageService {
       keyProvided: !!key,
       secretProvided: !!secret,
       environment: process.env.NODE_ENV,
-      isVercel: !!process.env.VERCEL
+      isVercel: !!process.env.VERCEL,
     });
-    
+
     try {
       this.s3Client = new S3Client({
         endpoint: endpoint,
@@ -51,49 +37,54 @@ class StorageService {
     }
   }
 
-  async upload(buffer: Buffer, originalFilename: string): Promise<string> {
-    // Generate a unique filename
+  async upload(file: File): Promise<Image> {
     const timestamp = new Date().toISOString().replace(/[:.-]/g, "");
-    const extension = originalFilename.split(".").pop() || "jpg";
+    const extension = file.name.split(".").pop() || "jpg";
     const filename = `${timestamp}.${extension}`;
-    
-    logInfo("Starting S3 upload", { 
-      originalFilename, 
-      generatedFilename: filename, 
-      bufferSize: buffer.length,
+
+    logInfo("Starting S3 upload", {
+      originalFilename: file.name,
+      generatedFilename: filename,
+      fileSize: file.size,
+      fileType: file.type,
       bucket: this.bucket,
-      endpoint: this.endpoint
+      endpoint: this.endpoint,
     });
 
     try {
-      // Upload directly - compression is now handled in the action
+      // Convert File to ArrayBuffer
+      const arrayBuffer = await file.arrayBuffer();
+      console.log("arrayBuffer", arrayBuffer);
+      // Convert ArrayBuffer to Buffer for S3
+      const buffer = Buffer.from(arrayBuffer);
+      debugger;
+
       const command = new PutObjectCommand({
         Bucket: this.bucket,
         Key: filename,
         Body: buffer,
         ACL: "public-read",
-        ContentType: this.getMimeType(extension),
+        ContentType: file.type || this.getMimeType(extension),
       });
-      
-      logInfo("Sending PutObjectCommand to S3", { 
-        bucket: this.bucket, 
-        key: filename, 
-        contentType: this.getMimeType(extension),
-        aclSetting: "public-read"
+
+      logInfo("Sending PutObjectCommand to S3", {
+        bucket: this.bucket,
+        key: filename,
+        contentType: file.type || this.getMimeType(extension),
+        aclSetting: "public-read",
       });
-      
+
       const result = await this.s3Client.send(command);
-      
-      logInfo("S3 upload successful", { 
+
+      logInfo("S3 upload successful", {
         filename,
         eTag: result.ETag,
-        statusCode: result.$metadata?.httpStatusCode
+        statusCode: result.$metadata?.httpStatusCode,
       });
     } catch (error) {
       logError("S3 upload error", error);
-      
-      // Log specific AWS error details if available
-      if (error && typeof error === 'object' && '$metadata' in error) {
+
+      if (error && typeof error === "object" && "$metadata" in error) {
         const metadata = (error as { $metadata: Record<string, unknown> }).$metadata;
         logError("S3 error metadata", {
           requestId: metadata?.requestId,
@@ -101,22 +92,27 @@ class StorageService {
           extendedRequestId: metadata?.extendedRequestId,
           httpStatusCode: metadata?.httpStatusCode,
           attempts: metadata?.attempts,
-          totalRetryDelay: metadata?.totalRetryDelay
+          totalRetryDelay: metadata?.totalRetryDelay,
         });
       }
-      
+
       throw new Error("Failed to upload file to storage");
     }
 
-    return filename;
+    const image: Image = {
+      alt: file.name,
+      id: new Date().getTime(),
+      url: this.getImageUrl(filename),
+    };
+
+    return image;
   }
 
   async delete(imagePath: string): Promise<void> {
     try {
-      // Extract the filename from the full path
       const urlParts = imagePath.split("/");
       const filename = urlParts[urlParts.length - 1];
-      
+
       logInfo("Starting S3 delete operation", { imagePath, extractedFilename: filename });
 
       await this.s3Client.send(
@@ -125,7 +121,7 @@ class StorageService {
           Key: filename,
         })
       );
-      
+
       logInfo("S3 delete successful", { filename });
     } catch (error) {
       logError("S3 delete error", error);
@@ -136,18 +132,15 @@ class StorageService {
   getImageUrl(imagePath: string | null): string {
     if (!imagePath) return "";
 
-    // If already a full URL, return as is
     if (imagePath.startsWith("http")) {
       return imagePath;
     }
 
-    // If path from the API route, convert to full URL
     if (imagePath.startsWith("/api/images/")) {
       const filename = imagePath.replace("/api/images/", "");
       return `https://${this.bucket}.${this.endpoint}/${filename}`;
     }
 
-    // Handle direct filename
     const path = imagePath.startsWith("/") ? imagePath.substring(1) : imagePath;
     return `https://${this.bucket}.${this.endpoint}/${path}`;
   }
@@ -168,6 +161,14 @@ class StorageService {
 
 const { DO_SPACES_ENDPOINT, DO_SPACES_REGION, DO_SPACES_KEY, DO_SPACES_SECRET, DO_SPACES_BUCKET } = process.env;
 
+console.log({
+  DO_SPACES_ENDPOINT,
+  DO_SPACES_REGION,
+  DO_SPACES_KEY,
+  DO_SPACES_SECRET,
+  DO_SPACES_BUCKET,
+});
+
 logInfo("Environment variables check", {
   endpointProvided: !!DO_SPACES_ENDPOINT,
   regionProvided: !!DO_SPACES_REGION,
@@ -175,7 +176,7 @@ logInfo("Environment variables check", {
   secretProvided: !!DO_SPACES_SECRET,
   bucketProvided: !!DO_SPACES_BUCKET,
   environment: process.env.NODE_ENV,
-  isVercel: !!process.env.VERCEL
+  isVercel: !!process.env.VERCEL,
 } as Record<string, unknown>);
 
 const storageService = new StorageService(

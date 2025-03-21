@@ -3,11 +3,11 @@ import Image from "next/image";
 import { format } from "date-fns";
 import Link from "next/link";
 import { ArrowLeft, ExternalLink } from "lucide-react";
-import { getCampaign } from "@/app/actions/campaigns";
+import { getCampaignAction } from "@/actions/campaign";
 
 export default async function CampaignPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const campaign = await getCampaign(id);
+  const campaign = await getCampaignAction(Number(id));
 
   if (!campaign) {
     notFound();

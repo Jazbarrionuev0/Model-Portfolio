@@ -1,8 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
-import UploadImages from "@/components/upload/upload-images";
 import Link from "next/link";
-import { createCookie, deleteCookie } from "../actions";
+import { createCookie, deleteCookie } from "../../actions/cookie";
 import bcrypt from "bcryptjs";
 import { useRouter } from "next/navigation";
 export default function UploadPage() {
@@ -87,7 +86,6 @@ export default function UploadPage() {
                 Logout
               </button>
             </div>
-            <UploadImages />
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">

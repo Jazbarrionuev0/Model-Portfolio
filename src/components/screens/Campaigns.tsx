@@ -1,51 +1,15 @@
-"use client";
-import { useEffect, useState } from "react";
 import { Campaign } from "@/types/campaign";
-import { getCampaigns } from "@/app/actions/campaigns";
 import Image from "next/image";
 import { format } from "date-fns";
 import Link from "next/link";
 
-export function Campaigns() {
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchCampaigns = async () => {
-      try {
-        const data = await getCampaigns();
-        setCampaigns(data);
-      } catch (err) {
-        setError("Failed to fetch campaigns");
-        console.error("Error fetching campaigns:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchCampaigns();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-40">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center p-8 bg-red-50 rounded-lg">
-        <p className="text-red-600">{error}</p>
-      </div>
-    );
-  }
+export function Campaigns({ campaigns }: { campaigns: Campaign[] }) {
+  const hasNoCampaigns = campaigns.length === 0;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12" id="campaigns">
       <h2 className="text-3xl font-bold text-center mb-12">Featured Campaigns</h2>
-      {campaigns.length === 0 ? (
+      {hasNoCampaigns ? (
         <div className="text-center p-8 bg-yellow-50 rounded-lg">
           <p className="text-yellow-600">No campaigns available at the moment.</p>
         </div>

@@ -5,7 +5,6 @@ export const imageSchema = z.object({
   id: z.number(),
   url: z.string().url(),
   alt: z.string(),
-  type: z.enum(["hero", "carousel"]),
 });
 
 // Brand schema
@@ -27,6 +26,26 @@ export const campaignSchema = z.object({
 
 // Separate schema for campaign creation (without id)
 export const createCampaignSchema = campaignSchema.omit({ id: true });
+
+export const defaultCreateCampaignSchema: CreateCampaignSchema = {
+  brand: {
+    name: "",
+    logo: {
+      id: 0,
+      url: "",
+      alt: "",
+    },
+    link: "",
+  },
+  description: "",
+  image: {
+    id: 0,
+    url: "",
+    alt: "",
+  },
+  images: [],
+  date: new Date(),
+};
 
 export type BrandSchema = z.infer<typeof brandSchema>;
 export type CampaignSchema = z.infer<typeof campaignSchema>;

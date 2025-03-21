@@ -1,9 +1,9 @@
-import React from "react";
 import { lato, libre } from "@/fonts/fonts";
-import { CarouselImg } from "../CarouselImg";
+import { CarouselImg } from "./CarouselImg";
 import { MoveLeft, MoveRight } from "lucide-react";
+import { Image } from "@/types/image";
 
-function Photos() {
+function Photos({ images }: { images: Image[] }) {
   return (
     <main className="flex flex-col min-h-screen bg-black text-white overflow-x-hidden">
       <div className="flex flex-col justify-center items-center w-full py-20 md:py-32 px-4">
@@ -15,7 +15,7 @@ function Photos() {
         <h2 className={`${lato.className} text-xl md:text-2xl text-white/80`}>FASHION MODEL | MODEL</h2>
       </div>
       <div className="flex-1 w-full pb-20 md:pb-32">
-        <CarouselImg />
+        <CarouselImg images={images} />
       </div>
     </main>
   );

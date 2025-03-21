@@ -7,7 +7,7 @@ export interface Brand {
 }
 
 export interface Campaign {
-  id: string;
+  id: number;
   brand: Brand;
   description: string;
   image: Image;

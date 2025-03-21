@@ -1,22 +1,12 @@
 "use client";
+
 import Autoplay from "embla-carousel-autoplay";
 import { Card, CardContent } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { Image as ImageType } from "@/types/image";
 import Image from "next/image";
-import { getCarouselImages } from "@/app/actions/carousel";
-import { useEffect, useState } from "react";
 
-export function CarouselImg() {
-  const [images, setImages] = useState<Array<{ id: number; url: string; alt: string }>>([]);
-
-  useEffect(() => {
-    const fetchImages = async () => {
-      const carouselImages = await getCarouselImages();
-      setImages(carouselImages);
-    };
-    fetchImages();
-  }, []);
-
+export function CarouselImg({ images }: { images: ImageType[] }) {
   return (
     <Carousel
       opts={{

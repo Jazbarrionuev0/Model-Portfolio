@@ -1,10 +1,11 @@
 import React from "react";
-import { PortfolioButton } from "../PortfolioButton";
-import HomeImg from "../HomeImg";
+import { PortfolioButton } from "../hero/PortfolioButton";
+import HomeImg from "../hero/HomeImg";
 import { lato, libre } from "@/fonts/fonts";
-import { AdminButton } from "../AdminButton";
+import { AdminButton } from "../hero/AdminButton";
+import { Image } from "@/types/image";
 
-function HomePage() {
+function HomePage({ images }: { images: Image[] }) {
   return (
     <main className="flex min-h-screen bg-black text-white">
       <div className="flex-1 ml-4 md:ml-24">
@@ -23,7 +24,7 @@ function HomePage() {
 
           {/* Right Content */}
           <div className="grid grid-cols-1 gap-4 h-[60vh] md:h-screen overflow-hidden">
-            <HomeImg />
+            <HomeImg heroImages={images} />
           </div>
         </div>
       </div>
