@@ -118,11 +118,12 @@ const ImageManager = ({ images: initialImages, type, title, emptyMessage, minIma
       {images.length === 0 ? (
         <p className="text-gray-500">{emptyMessage}</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
           {images.map((img) => (
             <div
               key={img.id}
-              className="relative group overflow-hidden rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 h-[300px]"
+              className="relative group overflow-hidden rounded-md shadow-md hover:shadow-xl transition-shadow duration-300"
+              style={{ aspectRatio: "3/4", minHeight: "300px" }}
             >
               <Image
                 src={img.url}

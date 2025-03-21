@@ -40,7 +40,7 @@ export async function uploadImageAction(file: File): Promise<Image> {
     const imageUrl = `https://${process.env.DO_SPACES_BUCKET}.${process.env.DO_SPACES_ENDPOINT?.replace("https://", "")}/${filename}`;
 
     return {
-      id: new Date().getTime(),
+      id: Date.now(),
       alt: file.name,
       url: imageUrl,
     };

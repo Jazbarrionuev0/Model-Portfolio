@@ -37,7 +37,7 @@ class StorageService {
     }
   }
 
-  async upload(file: File): Promise<Image> {
+  async upload(file: File): Promise<Omit<Image, "id">> {
     const timestamp = new Date().toISOString().replace(/[:.-]/g, "");
     const extension = file.name.split(".").pop() || "jpg";
     const filename = `${timestamp}.${extension}`;
@@ -99,9 +99,8 @@ class StorageService {
       throw new Error("Failed to upload file to storage");
     }
 
-    const image: Image = {
+    const image: Omit<Image, "id"> = {
       alt: file.name,
-      id: new Date().getTime(),
       url: this.getImageUrl(filename),
     };
 
