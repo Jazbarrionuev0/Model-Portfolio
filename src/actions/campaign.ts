@@ -17,6 +17,7 @@ export async function addCampaignAction(campaign: Omit<Campaign, "id">) {
   try {
     const result = await addCampaign(campaign);
     revalidatePath("/");
+  revalidatePath("/campaigns");
     return result;
   } catch (error) {
     console.error("Error adding campaign:", error);
@@ -28,6 +29,7 @@ export async function updateCampaignAction(campaign: Campaign) {
   try {
     const result = await updateCampaign(campaign);
     revalidatePath("/");
+  revalidatePath("/campaigns");
     return result;
   } catch (error) {
     console.error("Error updating campaign:", error);
@@ -39,6 +41,7 @@ export async function deleteCampaignAction(id: number) {
   try {
     const result = await deleteCampaign(id);
     revalidatePath("/");
+  revalidatePath("/campaigns");
     return result;
   } catch (error) {
     console.error("Error deleting campaign:", error);

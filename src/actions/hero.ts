@@ -23,6 +23,7 @@ export async function addHeroImageAction(image: Image) {
     return undefined;
   }
   revalidatePath("/");
+  revalidatePath("/images");
   return data;
 }
 
@@ -33,5 +34,7 @@ export async function deleteHeroImageAction(id: number) {
     return undefined;
   }
   revalidatePath("/");
+  revalidatePath("/images");
+
   return data;
 }
