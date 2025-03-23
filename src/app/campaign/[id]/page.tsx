@@ -14,9 +14,8 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
   }
 
   return (
-    <main className="min-h-screen">
-      {/* Hero Section with Parallax Effect */}
-      <div className="relative h-screen">
+    <main className="min-h-dvh">
+      <div className="relative h-dvh">
         <div className="absolute inset-0 overflow-hidden">
           <Image src={campaign.image.url} alt={campaign.description} fill priority className="object-cover" style={{ transform: "scale(1.1)" }} />
           <div className="absolute inset-0 bg-black/40" />
@@ -29,7 +28,7 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
               className="inline-flex items-center px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Volver a Campañas
+              Volver
             </Link>
           </div>
 

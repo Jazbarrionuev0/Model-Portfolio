@@ -8,7 +8,7 @@ export function Campaigns({ campaigns }: { campaigns: Campaign[] }) {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12" id="campaigns">
-      <h2 className="text-3xl font-bold text-center mb-12">Featured Campaigns</h2>
+      <h2 className="text-3xl text-gray-800 font-bold text-center mb-12">Mis Colaboraciones</h2>
       {hasNoCampaigns ? (
         <div className="text-center p-8 bg-yellow-50 rounded-lg">
           <p className="text-yellow-600">No campaigns available at the moment.</p>
@@ -45,7 +45,7 @@ export function Campaigns({ campaigns }: { campaigns: Campaign[] }) {
                       href={`/campaign/${campaign.id}`}
                       className="inline-flex items-center text-sm font-medium text-white hover:text-blue-200 transition-colors"
                     >
-                      Learn More
+                      Ver más
                       <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
