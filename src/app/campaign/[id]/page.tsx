@@ -61,7 +61,7 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
                 con la calidad hacen que cada campaña sea única e impactante.
               </p> */}
               <a
-                href={campaign.brand.link}
+                href={"https://instagram.com/" + campaign.brand.link}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center px-6 py-3 border border-yellow-600 text-yellow-600 rounded-lg shadow-lg transition-all duration-300 ease-in-out transform hover:bg-yellow-600 hover:text-white"
