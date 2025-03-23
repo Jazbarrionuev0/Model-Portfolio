@@ -1,7 +1,7 @@
 "use server";
 
 import { getCampaigns, addCampaign, deleteCampaign, updateCampaign, getCampaign } from "@/db/database";
-import { Campaign } from "@/types/campaign";
+import { Brand, Campaign } from "@/types/campaign";
 import { revalidatePath } from "next/cache";
 
 export async function getCampaignsAction() {
@@ -17,7 +17,7 @@ export async function addCampaignAction(campaign: Omit<Campaign, "id">) {
   try {
     const result = await addCampaign(campaign);
     revalidatePath("/");
-  revalidatePath("/campaigns");
+    revalidatePath("/campaigns");
     return result;
   } catch (error) {
     console.error("Error adding campaign:", error);
@@ -29,7 +29,7 @@ export async function updateCampaignAction(campaign: Campaign) {
   try {
     const result = await updateCampaign(campaign);
     revalidatePath("/");
-  revalidatePath("/campaigns");
+    revalidatePath("/campaigns");
     return result;
   } catch (error) {
     console.error("Error updating campaign:", error);
@@ -41,10 +41,16 @@ export async function deleteCampaignAction(id: number) {
   try {
     const result = await deleteCampaign(id);
     revalidatePath("/");
-  revalidatePath("/campaigns");
+    revalidatePath("/campaigns");
     return result;
   } catch (error) {
     console.error("Error deleting campaign:", error);
     throw error;
   }
+}
+
+export async function getBrandsAction(): Promise<Brand[]> {
+  const campaigns = await getCampaigns();
+  const brands = campaigns.map((campaign) => campaign.brand);
+  return brands;
 }
