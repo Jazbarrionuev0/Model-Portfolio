@@ -50,23 +50,18 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
         </div> */}
       </div>
 
-      {/* Brand Information */}
       <section className="bg-white py-20">
         <div className="max-w-6xl mx-auto px-6 md:px-12">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-3xl font-bold mb-6">Acerca de la Marca</h2>
-              {/* <p className="text-gray-700 text-lg mb-8">
-                {campaign.brand.name} se dedica a crear productos excepcionales que destacan en el mercado actual. Su atención al detalle y compromiso
-                con la calidad hacen que cada campaña sea única e impactante.
-              </p> */}
+              <h2 className="text-3xl font-bold mb-6">Acerca de {campaign.brand.name}</h2>
               <a
                 href={"https://instagram.com/" + campaign.brand.link}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center px-6 py-3 border border-yellow-600 text-yellow-600 rounded-lg shadow-lg transition-all duration-300 ease-in-out transform hover:bg-yellow-600 hover:text-white"
               >
-                Visitar Sitio Web de la Marca
+                Visitar Instagram de la marca
                 <ExternalLink className="ml-2 h-4 w-4" />
               </a>
             </div>
@@ -77,18 +72,16 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
         </div>
       </section>
 
-      {/* Campaign Description */}
       <section className="bg-gray-50 py-20">
         <div className="max-w-4xl mx-auto px-6 md:px-12 text-center">
           <p className="text-gray-700 text-lg leading-relaxed">{campaign.description}</p>
           <div className="mt-12 inline-block px-8 py-6 bg-gray-100 rounded-xl shadow-lg border border-gray-300">
-            <p className="text-xl font-semibold text-gray-800">Fecha de Lanzamiento</p>
+            <p className="text-xl font-semibold text-gray-800">Fecha de lanzamiento</p>
             <p className="text-3xl font-bold text-yellow-600">{format(new Date(campaign.date), "d 'de' MMMM 'de' yyyy")}</p>
           </div>
         </div>
       </section>
 
-      {/* Campaign Gallery */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-6 md:px-12">
           <h2 className="text-3xl font-bold mb-12 text-center">Galería</h2>
