@@ -52,7 +52,6 @@ export default function CampaignForm() {
     });
   };
 
-  // Handle main image selection
   const handleMainImageSelect = (file: File) => {
     const previewUrl = addLocalImage(file, "hero");
     form.setValue("image", {
@@ -146,8 +145,7 @@ export default function CampaignForm() {
         return;
       }
 
-      const updatedData = form.getValues();
-      await addCampaignAction(updatedData);
+      await addCampaignAction(data);
 
       router.push("/campaigns");
     } catch (error) {
