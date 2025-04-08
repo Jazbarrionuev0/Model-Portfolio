@@ -56,7 +56,7 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
             <div>
               <h2 className="text-3xl font-bold mb-6">Acerca de {campaign.brand.name}</h2>
               <a
-                href={"https://instagram.com/" + campaign.brand.link}
+                href={campaign.brand.link}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center px-6 py-3 border border-yellow-600 text-yellow-600 rounded-lg shadow-lg transition-all duration-300 ease-in-out transform hover:bg-yellow-600 hover:text-white"

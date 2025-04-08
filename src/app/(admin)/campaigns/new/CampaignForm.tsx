@@ -145,7 +145,8 @@ export default function CampaignForm() {
         return;
       }
 
-      await addCampaignAction(data);
+      const updatedData = form.getValues();
+      await addCampaignAction({ ...updatedData, brand: { ...updatedData.brand, link: "https://www.instagram.com/" + username } });
 
       router.push("/campaigns");
     } catch (error) {

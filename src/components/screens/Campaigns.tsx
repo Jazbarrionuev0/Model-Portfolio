@@ -16,7 +16,8 @@ export function Campaigns({ campaigns }: { campaigns: Campaign[] }) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {campaigns.map((campaign) => (
-            <div
+            <Link
+              href={`/campaign/${campaign.id}`}
               key={campaign.id}
               className="group relative overflow-hidden rounded-xl bg-white shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
             >
@@ -41,20 +42,20 @@ export function Campaigns({ campaigns }: { campaigns: Campaign[] }) {
                   </div>
                   <h3 className="text-xl font-bold mb-2 line-clamp-2">{campaign.description}</h3>
                   <div className="flex items-center justify-between">
-                    <Link
-                      href={`/campaign/${campaign.id}`}
+                    <div
+                      // href={`/campaign/${campaign.id}`}
                       className="inline-flex items-center text-sm font-medium text-white hover:text-blue-200 transition-colors"
                     >
                       Ver más
                       <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
-                    </Link>
+                    </div>
                     <span className="text-sm text-gray-200">{format(new Date(campaign.date), "MMM d, yyyy")}</span>
                   </div>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}
