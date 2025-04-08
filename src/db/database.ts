@@ -203,11 +203,11 @@ export const deleteCampaign = async (id: number): Promise<void> => {
   }
 };
 
-export const getProfile = async (): Promise<Profile | null> => {
+export const getProfile = async (): Promise<Profile> => {
   try {
     logInfo("Fetching profile");
     const data = await redis.get("profile");
-    return data ? JSON.parse(data) : null;
+    return JSON.parse(data!);
   } catch (error) {
     logError("Error fetching profile", error);
     throw error;

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { Profile } from "@/types/profile";
 import { createProfile, getProfile, updateProfile } from "@/db/database";
 
-export async function getProfileAction(): Promise<Profile | null> {
+export async function getProfileAction(): Promise<Profile> {
   try {
     return await getProfile();
   } catch (error) {

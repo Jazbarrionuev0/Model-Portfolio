@@ -30,11 +30,14 @@ export default function Header() {
               Imágenes
             </Link>
           </li>
-          {/* <li className="w-full sm:w-auto">
-            <Link href="/profile" className="block text-center sm:inline-block w-full text-gray-700 hover:text-blue-600 font-medium transition-colors px-3 py-2 rounded-md hover:bg-gray-50">
+          <li className="w-full sm:w-auto">
+            <Link
+              href="/profile"
+              className="block text-center sm:inline-block w-full text-gray-700 hover:text-blue-600 font-medium transition-colors px-3 py-2 rounded-md hover:bg-gray-50"
+            >
               Perfil
             </Link>
-          </li> */}
+          </li>
         </ul>
       </nav>
     </header>

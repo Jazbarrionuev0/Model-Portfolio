@@ -2,9 +2,9 @@
 import React from "react";
 import { FaInstagram, FaEnvelope, FaMapMarkerAlt } from "react-icons/fa";
 import { motion } from "framer-motion";
-import { siteConfig } from "@/config/site";
+import { Profile } from "@/types/profile";
 
-function Contact() {
+function Contact({ profile }: { profile: Profile }) {
   return (
     <div id="contact" className="bg-black p-4 md:p-20">
       {/* Contact Card */}
@@ -19,16 +19,16 @@ function Contact() {
 
         <div className="flex flex-col items-center md:items-end w-full">
           <div className="flex items-center gap-2 my-3">
-            <h2 className={` w-fit text-xl md:text-2xl uppercase text-center md:text-right`}>Catalina Barrionuevo</h2>
+            <h2 className={` w-fit text-xl md:text-2xl uppercase text-center md:text-right`}>{profile.name}</h2>
           </div>
 
           <div className="flex items-center gap-2 my-3">
             <a
-              href={`mailto:${siteConfig.email}`}
+              href={`mailto:${profile.email}`}
               className={`w-fit text-lg md:text-xl uppercase hover:text-gray-600 transition-colors duration-300 text-center md:text-right flex items-center gap-2 break-all`}
             >
               <FaEnvelope className="text-xl flex-shrink-0" />
-              {siteConfig.email}
+              {profile.email}
             </a>
           </div>
 
@@ -39,16 +39,14 @@ function Contact() {
 
           {/* Social Media Links */}
           <div className="flex gap-4 mt-8 justify-center md:justify-end">
-            {siteConfig.instagram && (
-              <a
-                href={siteConfig.instagram}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:scale-110 transition-transform duration-300 bg-black text-white p-3 rounded-full"
-              >
-                <FaInstagram className="text-2xl" />
-              </a>
-            )}
+            <a
+              href={"https://instagram.com/" + profile.instagram}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:scale-110 transition-transform duration-300 bg-black text-white p-3 rounded-full"
+            >
+              <FaInstagram className="text-2xl" />
+            </a>
           </div>
 
           <motion.div

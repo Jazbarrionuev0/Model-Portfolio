@@ -34,7 +34,14 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
 
           <div className="max-w-4xl mx-auto text-center space-y-4">
             <div className="flex items-center justify-center space-x-4 mb-6">
-              <Image src={campaign.brand.logo.url} alt={campaign.brand.name} width={64} height={64} className="rounded-full border-2 border-white" />
+              <Image
+                src={campaign.brand.logo.url}
+                alt={campaign.brand.name}
+                width={64}
+                height={64}
+                className="rounded-full border-2 border-white"
+                priority
+              />
               <span className="text-2xl font-bold">{campaign.brand.name}</span>
             </div>
             <h1 className="text-4xl md:text-6xl font-bold leading-tight">{campaign.description}</h1>
@@ -66,7 +73,7 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
               </a>
             </div>
             <div className="relative aspect-square rounded-2xl overflow-hidden shadow-2xl">
-              <Image src={campaign.brand.logo.url} alt={campaign.brand.name} fill className="object-cover" />
+              <Image src={campaign.brand.logo.url} alt={campaign.brand.name} fill className="object-cover" priority />
             </div>
           </div>
         </div>
@@ -94,7 +101,7 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
                   index === 0 ? "md:col-span-2 aspect-video" : "aspect-square"
                 }`}
               >
-                <Image src={image.url} alt={image.alt} fill className="object-cover" />
+                <Image src={image.url} alt={image.alt} fill className="object-cover" priority />
               </div>
             ))}
           </div>

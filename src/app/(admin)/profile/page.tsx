@@ -1,6 +1,5 @@
 import { getProfileAction } from "@/actions/profile";
 import ProfileView from "@/components/admin/profile/profile-view";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -17,19 +16,15 @@ export default async function ProfilePage() {
   }
 
   return (
-    <div className="container mx-auto p-6">
+    <div className=" p-4 md:p-8 max-w-xl mx-auto">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Profile Management</h1>
+        <h1 className="text-2xl font-bold">Perfil</h1>
         <Link href="/profile/edit">
-          <Button>Edit Profile</Button>
+          <Button>Editar perfil</Button>
         </Link>
       </div>
 
-      <Card>
-        <CardContent className="pt-6">
-          <ProfileView profile={profile} />
-        </CardContent>
-      </Card>
+      <ProfileView profile={profile} />
     </div>
   );
 }

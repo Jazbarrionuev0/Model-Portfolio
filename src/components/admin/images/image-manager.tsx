@@ -6,6 +6,7 @@ import { addHeroImageAction, deleteHeroImageAction } from "@/actions/hero";
 import { uploadImageAction } from "@/actions/upload";
 import { addCarouselImageAction, deleteCarouselImageAction } from "@/actions/carousel";
 import { logError } from "@/lib/utils";
+import { PlusCircle } from "lucide-react";
 
 type ImageTypeKey = "hero" | "carousel";
 
@@ -110,7 +111,8 @@ const ImageManager = ({ images: initialImages, type, title, emptyMessage, minIma
 
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-800">{title}</h2>
-        <label className="bg-blue-500 text-white px-4 py-2 rounded-lg cursor-pointer hover:bg-blue-600 transition-colors">
+        <label className="bg-blue-500 text-white px-4 py-2 rounded-lg cursor-pointer hover:bg-blue-600 transition-colors flex items-center gap-2">
+          <PlusCircle size={18} />
           Agregar Imágen
           <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={uploadStatus.status === "uploading"} />
         </label>

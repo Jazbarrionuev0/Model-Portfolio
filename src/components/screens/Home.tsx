@@ -29,14 +29,11 @@ const HeroSection = ({ profile, images }: { profile: Profile; images: ImageType[
       const { top, bottom, height } = sectionRef.current.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
 
-      // Only apply effects when section is in view
       const isInView = top < viewportHeight && bottom > 0;
 
       if (isInView) {
-        // Calculate how far we've scrolled through the section
         const scrollProgress = Math.max(0, Math.min(1, -top / height));
 
-        // Apply parallax effect to content
         contentRef.current.style.transform = `translateY(${scrollProgress * 30}px)`;
         contentRef.current.style.opacity = `${1 - scrollProgress * 0.5}`;
       }

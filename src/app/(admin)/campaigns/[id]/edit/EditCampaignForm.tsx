@@ -19,19 +19,10 @@ const EditCampaignForm = ({ campaign }: { campaign: Campaign }) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
-  let instagramUsername = campaign.brand.link;
-  if (instagramUsername.startsWith("https://www.instagram.com/")) {
-    instagramUsername = instagramUsername.replace("https://www.instagram.com/", "");
-  }
-
   const form = useForm<CreateCampaignSchema>({
     resolver: zodResolver(createCampaignSchema),
     defaultValues: {
       ...campaign,
-      brand: {
-        ...campaign.brand,
-        link: instagramUsername,
-      },
       date: new Date(campaign.date),
     },
   });

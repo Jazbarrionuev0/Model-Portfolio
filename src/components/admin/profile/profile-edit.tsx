@@ -1,3 +1,5 @@
+"use client";
+
 import { Profile } from "@/types/profile";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -7,12 +9,15 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { profileFormSchema, ProfileFormValues } from "@/schemas/campaign.schema";
+import { useRouter } from "next/navigation";
 
 interface ProfileEditProps {
   profile: Profile;
 }
 
 const ProfileEdit: React.FC<ProfileEditProps> = ({ profile }) => {
+  const router = useRouter();
+
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: profile,
@@ -21,6 +26,7 @@ const ProfileEdit: React.FC<ProfileEditProps> = ({ profile }) => {
   const onSubmit = async (data: ProfileFormValues) => {
     try {
       await updateProfileAction(data as Profile);
+      router.push("/profile");
     } catch (error) {
       console.info(error);
     }
@@ -48,7 +54,7 @@ const ProfileEdit: React.FC<ProfileEditProps> = ({ profile }) => {
           name="occupation"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Occupation</FormLabel>
+              <FormLabel>Ocupacion</FormLabel>
               <FormControl>
                 <Input placeholder="Enter your occupation" {...field} />
               </FormControl>
@@ -90,7 +96,7 @@ const ProfileEdit: React.FC<ProfileEditProps> = ({ profile }) => {
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Description</FormLabel>
+              <FormLabel>Descripcion</FormLabel>
               <FormControl>
                 <Textarea placeholder="Tell us about yourself" className="min-h-[150px]" {...field} />
               </FormControl>
@@ -100,7 +106,7 @@ const ProfileEdit: React.FC<ProfileEditProps> = ({ profile }) => {
         />
 
         <Button type="submit" className="w-full">
-          Save Changes
+          Guardar cambios
         </Button>
       </form>
     </Form>

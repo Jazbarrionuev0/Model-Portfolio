@@ -14,6 +14,7 @@ import Image from "next/image";
 import { logError, logInfo } from "@/lib/utils";
 import { addCampaignAction } from "@/actions/campaign";
 import { uploadImageAction } from "@/actions/upload";
+import { Image as ImageType } from "@/types/image";
 
 interface LocalImage {
   file: File;
@@ -187,8 +188,7 @@ export default function CampaignForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 max-w-2xl">
-        {/* Brand name field - unchanged */}
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 max-w-4xl">
         <FormField
           control={form.control}
           name="brand.name"
@@ -203,7 +203,6 @@ export default function CampaignForm() {
           )}
         />
 
-        {/* Brand logo field - updated */}
         <FormField
           control={form.control}
           name="brand.logo"
@@ -236,7 +235,6 @@ export default function CampaignForm() {
           )}
         />
 
-        {/* Brand link field - unchanged */}
         <FormField
           control={form.control}
           name="brand.link"
@@ -251,7 +249,6 @@ export default function CampaignForm() {
           )}
         />
 
-        {/* Description field - unchanged */}
         <FormField
           control={form.control}
           name="description"
@@ -266,7 +263,6 @@ export default function CampaignForm() {
           )}
         />
 
-        {/* Date field - unchanged */}
         <FormField
           control={form.control}
           name="date"
@@ -291,7 +287,6 @@ export default function CampaignForm() {
           )}
         />
 
-        {/* Main image field - updated */}
         <FormField
           control={form.control}
           name="image"
@@ -324,11 +319,10 @@ export default function CampaignForm() {
           )}
         />
 
-        {/* Additional images section - updated */}
         <div className="space-y-4">
           <FormLabel>Imágenes Adicionales</FormLabel>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {form.watch("images").map((image, index) => (
+            {form.watch("images").map((image: ImageType, index: number) => (
               <div key={image.id} className="relative group">
                 <div className="aspect-square rounded-lg overflow-hidden border border-gray-200">
                   <Image

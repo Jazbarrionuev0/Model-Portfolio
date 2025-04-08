@@ -27,6 +27,7 @@ export function Campaigns({ campaigns }: { campaigns: Campaign[] }) {
                   alt={campaign.description}
                   fill
                   className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  priority
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
@@ -37,15 +38,13 @@ export function Campaigns({ campaigns }: { campaigns: Campaign[] }) {
                       width={32}
                       height={32}
                       className="rounded-full border-2 border-white"
+                      priority
                     />
                     <span className="font-semibold">{campaign.brand.name}</span>
                   </div>
                   <h3 className="text-xl font-bold mb-2 line-clamp-2">{campaign.description}</h3>
                   <div className="flex items-center justify-between">
-                    <div
-                      // href={`/campaign/${campaign.id}`}
-                      className="inline-flex items-center text-sm font-medium text-white hover:text-blue-200 transition-colors"
-                    >
+                    <div className="inline-flex items-center text-sm font-medium text-white hover:text-blue-200 transition-colors">
                       Ver más
                       <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
