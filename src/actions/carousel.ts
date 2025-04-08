@@ -1,6 +1,6 @@
 "use server";
 
-import { getCarouselImages, addCarouselImage, deleteCarouselImage } from "@/db/database";
+import { addCarouselImage, deleteCarouselImage, getCarouselImages } from "@/lib/database";
 import { Image } from "@/types/image";
 import { revalidatePath } from "next/cache";
 

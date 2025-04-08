@@ -39,7 +39,7 @@ class StorageService {
 
   async upload(file: File): Promise<Omit<Image, "id">> {
     const timestamp = new Date().toISOString().replace(/[:.-]/g, "");
-    const extension = file.name.split(".").pop() || "jpg";
+    const extension = file.name.split(".").pop() || "";
     const filename = `${timestamp}.${extension}`;
 
     logInfo("Starting S3 upload", {

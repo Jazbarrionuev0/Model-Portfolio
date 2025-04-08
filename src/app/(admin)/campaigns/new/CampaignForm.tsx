@@ -15,6 +15,7 @@ import { logError, logInfo } from "@/lib/utils";
 import { addCampaignAction } from "@/actions/campaign";
 import { uploadImageAction } from "@/actions/upload";
 import { Image as ImageType } from "@/types/image";
+import { useToast } from "@/hooks/use-toast";
 
 interface LocalImage {
   file: File;
@@ -24,6 +25,8 @@ interface LocalImage {
 
 export default function CampaignForm() {
   const router = useRouter();
+  const { toast } = useToast();
+
   const [date, setDate] = useState<Date>(new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -117,6 +120,11 @@ export default function CampaignForm() {
     try {
       setIsSubmitting(true);
 
+      toast({
+        title: "Submitting...",
+        description: "Saving your profile changes.",
+      });
+
       if (!data.brand.name) {
         logError("Validation error: Brand name is required", null);
         form.setError("brand.name", { message: "Brand name is required" });
@@ -149,9 +157,21 @@ export default function CampaignForm() {
       const updatedData = form.getValues();
       await addCampaignAction({ ...updatedData, brand: { ...updatedData.brand, link: "https://www.instagram.com/" + username } });
 
+      toast({
+        title: "Success!",
+        description: "Your profile has been updated successfully.",
+        variant: "default",
+      });
+
       router.push("/campaigns");
     } catch (error) {
       logError("Error creating campaign", error);
+
+      toast({
+        title: "Error",
+        description: "Something went wrong while updating your profile.",
+        variant: "destructive",
+      });
 
       let errorMessage = "Error creating campaign";
       if (error instanceof Error) {

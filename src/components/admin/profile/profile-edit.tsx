@@ -1,5 +1,4 @@
 "use client";
-
 import { Profile } from "@/types/profile";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -10,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { profileFormSchema, ProfileFormValues } from "@/schemas/campaign.schema";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProfileEditProps {
   profile: Profile;
@@ -17,6 +18,8 @@ interface ProfileEditProps {
 
 const ProfileEdit: React.FC<ProfileEditProps> = ({ profile }) => {
   const router = useRouter();
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -24,11 +27,33 @@ const ProfileEdit: React.FC<ProfileEditProps> = ({ profile }) => {
   });
 
   const onSubmit = async (data: ProfileFormValues) => {
+    setIsSubmitting(true);
+
     try {
+      toast({
+        title: "Submitting...",
+        description: "Saving your profile changes.",
+      });
+
       await updateProfileAction(data as Profile);
+
+      toast({
+        title: "Success!",
+        description: "Your profile has been updated successfully.",
+        variant: "default",
+      });
+
       router.push("/profile");
     } catch (error) {
       console.info(error);
+
+      toast({
+        title: "Error",
+        description: "Something went wrong while updating your profile.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -48,7 +73,6 @@ const ProfileEdit: React.FC<ProfileEditProps> = ({ profile }) => {
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="occupation"
@@ -62,7 +86,6 @@ const ProfileEdit: React.FC<ProfileEditProps> = ({ profile }) => {
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="email"
@@ -76,7 +99,6 @@ const ProfileEdit: React.FC<ProfileEditProps> = ({ profile }) => {
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="instagram"
@@ -90,7 +112,6 @@ const ProfileEdit: React.FC<ProfileEditProps> = ({ profile }) => {
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="description"
@@ -104,9 +125,8 @@ const ProfileEdit: React.FC<ProfileEditProps> = ({ profile }) => {
             </FormItem>
           )}
         />
-
-        <Button type="submit" className="w-full">
-          Guardar cambios
+        <Button type="submit" className="w-full" disabled={isSubmitting}>
+          {isSubmitting ? "Guardando..." : "Guardar cambios"}
         </Button>
       </form>
     </Form>

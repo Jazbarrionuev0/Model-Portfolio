@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { Profile } from "@/types/profile";
-import { createProfile, getProfile, updateProfile } from "@/db/database";
+import { createProfile, getProfile, updateProfile } from "@/lib/database";
 
 export async function getProfileAction(): Promise<Profile> {
   try {

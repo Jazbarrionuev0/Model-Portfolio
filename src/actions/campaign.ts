@@ -1,6 +1,6 @@
 "use server";
 
-import { getCampaigns, addCampaign, deleteCampaign, updateCampaign, getCampaign } from "@/db/database";
+import { addCampaign, deleteCampaign, getCampaign, getCampaigns, updateCampaign } from "@/lib/database";
 import { Campaign } from "@/types/campaign";
 import { revalidatePath } from "next/cache";
 

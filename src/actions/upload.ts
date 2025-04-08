@@ -10,7 +10,7 @@ export async function uploadImageAction(file: File): Promise<Image> {
   }
 
   const timestamp = new Date().toISOString().replace(/[:.-]/g, "");
-  const extension = file.name.split(".").pop() || "jpg";
+  const extension = file.name.split(".").pop() || "";
   const filename = `${timestamp}.${extension}`;
 
   const s3Client = new S3Client({

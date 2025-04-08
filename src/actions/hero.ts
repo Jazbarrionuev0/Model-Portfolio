@@ -1,9 +1,9 @@
 "use server";
 
-import { getHeroImages, addHeroImage, deleteHeroImage } from "@/db/database";
 import { Image } from "@/types/image";
 import { revalidatePath } from "next/cache";
 import { tryCatch } from "@/lib/try-catch";
+import { addHeroImage, deleteHeroImage, getHeroImages } from "@/lib/database";
 
 export async function getHeroImagesAction() {
   const { data, error } = await tryCatch(getHeroImages());
