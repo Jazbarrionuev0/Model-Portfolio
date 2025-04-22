@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Campaign } from "@/types/campaign";
 import { deleteCampaignAction } from "@/actions/campaign";
 import { PlusCircle, Edit, Trash2, ExternalLink, Calendar } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface CampaignsListProps {
   initialCampaigns: Campaign[];
@@ -14,6 +15,7 @@ const CampaignsList = ({ initialCampaigns }: CampaignsListProps) => {
   const router = useRouter();
   const [campaigns, setCampaigns] = useState<Campaign[]>(initialCampaigns);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const handleCreate = () => {
     router.push("/campaigns/new");
@@ -28,11 +30,29 @@ const CampaignsList = ({ initialCampaigns }: CampaignsListProps) => {
 
     try {
       setError(null);
+      toast({
+        title: "Eliminando...",
+        description: "Eliminando la campaña seleccionada.",
+        variant: "warning",
+      });
+
       await deleteCampaignAction(id);
       setCampaigns(campaigns.filter((campaign) => campaign.id !== id));
+
+      toast({
+        title: "Campaña eliminada",
+        description: "La campaña ha sido eliminada correctamente.",
+        variant: "default",
+      });
     } catch (error) {
       console.error("Error deleting campaign:", error);
       setError(error instanceof Error ? error.message : "Error deleting campaign");
+
+      toast({
+        title: "Error",
+        description: "Ocurrió un problema al eliminar la campaña.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -65,13 +85,6 @@ const CampaignsList = ({ initialCampaigns }: CampaignsListProps) => {
           </div>
           <h3 className="text-xl font-semibold mb-2 text-gray-800">No hay campañas</h3>
           <p className="text-gray-500 max-w-md mx-auto mb-6">Aún no has creado ninguna campaña. Comienza creando tu primera campaña publicitaria.</p>
-          <button
-            onClick={handleCreate}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center gap-2"
-          >
-            <PlusCircle size={18} />
-            <span>Crear Primera Campaña</span>
-          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -136,7 +149,7 @@ const CampaignsList = ({ initialCampaigns }: CampaignsListProps) => {
                     className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1"
                   >
                     <ExternalLink size={14} />
-                    <span>Ver sitio web</span>
+                    <span>Ver instagram de la marca</span>
                   </a>
                   <div className="flex gap-2">
                     <button

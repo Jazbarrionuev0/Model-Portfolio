@@ -16,6 +16,7 @@ import { addCampaignAction } from "@/actions/campaign";
 import { uploadImageAction } from "@/actions/upload";
 import { Image as ImageType } from "@/types/image";
 import { useToast } from "@/hooks/use-toast";
+import { Building2, Calendar, FileImage, ImageIcon, Instagram, Plus, Upload } from "lucide-react";
 
 interface LocalImage {
   file: File;
@@ -122,50 +123,194 @@ export default function CampaignForm() {
     return results.every((r) => r.uploaded !== null);
   };
 
+  const cleanInstagramUsername = (username: string): string => {
+    if (!username) return "";
+
+    // Remove @ symbol if present
+    username = username.replace(/^@/, "");
+
+    // Remove instagram.com URL if present
+    username = username.replace(/^(https?:\/\/)?(www\.)?instagram\.com\//, "");
+
+    // Remove trailing slash if present
+    username = username.replace(/\/$/, "");
+
+    // Remove any query parameters or fragments
+    username = username.split(/[?#]/)[0];
+
+    // Check if username contains spaces or special characters
+    if (/\s/.test(username) || !/^[\w.]+$/.test(username)) {
+      return ""; // Invalid username format
+    }
+
+    return username;
+  };
+
+  const validateFieldsAndShowWarnings = (): boolean => {
+    let isValid = true;
+    const formData = form.getValues();
+
+    // Brand name validation
+    if (!formData.brand.name) {
+      toast({
+        title: "Campo requerido",
+        description: "El nombre de la marca es obligatorio",
+        variant: "warning",
+      });
+      isValid = false;
+    }
+
+    // Brand logo validation
+    if (!formData.brand.logo || !formData.brand.logo.url) {
+      toast({
+        title: "Campo requerido",
+        description: "El logo de la marca es obligatorio",
+        variant: "warning",
+      });
+      isValid = false;
+    }
+
+    // Instagram link validation - now required
+    if (!formData.brand.link) {
+      toast({
+        title: "Campo requerido",
+        description: "El Instagram de la marca es obligatorio",
+        variant: "warning",
+      });
+      isValid = false;
+    } else if (formData.brand.link) {
+      const cleanUsername = cleanInstagramUsername(formData.brand.link);
+      if (!cleanUsername) {
+        toast({
+          title: "Formato inválido",
+          description: "El nombre de usuario de Instagram no es válido. No debe contener espacios ni caracteres especiales.",
+          variant: "warning",
+        });
+        isValid = false;
+      }
+    }
+
+    // Main image validation
+    if (!formData.image || !formData.image.url) {
+      toast({
+        title: "Campo requerido",
+        description: "La imagen principal es obligatoria",
+        variant: "warning",
+      });
+      isValid = false;
+    }
+
+    // Additional images validation
+    if (!formData.images || formData.images.length === 0) {
+      toast({
+        title: "Campo requerido",
+        description: "Tiene que haber al menos una imagen adicional",
+        variant: "warning",
+      });
+      isValid = false;
+    }
+
+    // Description validation
+    if (!formData.description || formData.description.trim() === "") {
+      toast({
+        title: "Campo requerido",
+        description: "La descripción es obligatoria",
+        variant: "warning",
+      });
+      isValid = false;
+    }
+
+    // Date validation
+    if (!date) {
+      toast({
+        title: "Campo requerido",
+        description: "La fecha es obligatoria",
+        variant: "warning",
+      });
+      isValid = false;
+    } else {
+      // Check if date is valid
+      const selectedDate = new Date(date);
+      if (isNaN(selectedDate.getTime())) {
+        toast({
+          title: "Formato inválido",
+          description: "La fecha ingresada no es válida",
+          variant: "warning",
+        });
+        isValid = false;
+      }
+
+      // Check if date is in the past (optional validation)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      selectedDate.setHours(0, 0, 0, 0);
+
+      if (selectedDate < today) {
+        toast({
+          title: "Advertencia",
+          description: "La fecha seleccionada está en el pasado",
+          variant: "warning",
+        });
+        // Not marking as invalid, just a warning
+      }
+    }
+
+    return isValid;
+  };
+
   const onSubmit = async (data: Omit<Campaign, "id">) => {
     try {
       setIsSubmitting(true);
 
+      // Validate fields and show warnings
+      if (!validateFieldsAndShowWarnings()) {
+        setIsSubmitting(false);
+        return;
+      }
+
       toast({
-        title: "Submitting...",
-        description: "Saving your profile changes.",
+        title: "Enviando...",
+        description: "Guardando la información de la campaña.",
+        variant: "warning",
       });
 
-      if (!data.brand.name) {
-        logError("Validation error: Brand name is required", null);
-        form.setError("brand.name", { message: "Brand name is required" });
-        return;
-      }
+      // Clean Instagram username if provided
+      const username = cleanInstagramUsername(data.brand.link);
 
-      if (!form.getValues("brand.logo")) {
-        logError("Validation error: Brand logo is required", null);
-        form.setError("brand.logo", { message: "Brand logo is required" });
+      if (data.brand.link && !username) {
+        toast({
+          title: "Error de validación",
+          description: "El formato del usuario de Instagram no es válido",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
         return;
-      }
-
-      if (!form.getValues("image")) {
-        logError("Validation error: Main image is required", null);
-        form.setError("image", { message: "Main image is required" });
-        return;
-      }
-
-      const username = data.brand.link;
-      if (username && !username.startsWith("https://www.instagram.com/")) {
-        data.brand.link = "https://www.instagram.com/" + username;
       }
 
       const uploadSuccess = await uploadAllImages();
       if (!uploadSuccess) {
-        form.setError("root", { message: "Failed to upload one or more images" });
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar una o más imágenes",
+          variant: "destructive",
+        });
+        form.setError("root", { message: "No se pudieron cargar una o más imágenes" });
+        setIsSubmitting(false);
         return;
       }
 
       const updatedData = form.getValues();
-      await addCampaignAction({ ...updatedData, brand: { ...updatedData.brand, link: "https://www.instagram.com/" + username } });
+      await addCampaignAction({
+        ...updatedData,
+        brand: {
+          ...updatedData.brand,
+          link: username ? `https://www.instagram.com/${username}` : "",
+        },
+      });
 
       toast({
-        title: "Success!",
-        description: "Your profile has been updated successfully.",
+        title: "¡Éxito!",
+        description: "La campaña ha sido creada exitosamente.",
         variant: "default",
       });
 
@@ -175,11 +320,11 @@ export default function CampaignForm() {
 
       toast({
         title: "Error",
-        description: "Something went wrong while updating your profile.",
+        description: "Ocurrió un problema al crear la campaña.",
         variant: "destructive",
       });
 
-      let errorMessage = "Error creating campaign";
+      let errorMessage = "Error al crear la campaña";
       if (error instanceof Error) {
         errorMessage = error.message;
 
@@ -222,7 +367,10 @@ export default function CampaignForm() {
             <FormItem>
               <FormLabel>Nombre de la Marca</FormLabel>
               <FormControl>
-                <Input placeholder="Ingrese el nombre de la marca" {...field} />
+                <div className="relative">
+                  <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                  <Input placeholder="Ingrese el nombre de la marca" {...field} className="pl-10" />
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -236,17 +384,21 @@ export default function CampaignForm() {
             <FormItem>
               <FormLabel>Logo de la Marca</FormLabel>
               <FormControl>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      await handleLogoSelect(file);
-                    }
-                  }}
-                  disabled={isSubmitting}
-                />
+                <div className="relative">
+                  <Upload className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        await handleLogoSelect(file);
+                      }
+                    }}
+                    disabled={isSubmitting}
+                    className="pl-10"
+                  />
+                </div>
               </FormControl>
               <FormMessage />
               {form.watch("brand.logo.url") && (
@@ -268,7 +420,19 @@ export default function CampaignForm() {
             <FormItem>
               <FormLabel>Instagram de la Marca</FormLabel>
               <FormControl>
-                <Input placeholder="@username" {...field} />
+                <div className="relative">
+                  <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                  <Input
+                    placeholder="@username"
+                    {...field}
+                    className="pl-10"
+                    onChange={(e) => {
+                      // Store clean value without @ symbol
+                      const cleanValue = e.target.value.replace(/^@/, "");
+                      field.onChange(cleanValue);
+                    }}
+                  />
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -282,7 +446,10 @@ export default function CampaignForm() {
             <FormItem>
               <FormLabel>Descripción</FormLabel>
               <FormControl>
-                <Textarea placeholder="Ingrese la descripción" {...field} />
+                <div className="relative">
+                  <FileImage className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
+                  <Textarea placeholder="Ingrese la descripción" {...field} className="pl-10" />
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -296,17 +463,21 @@ export default function CampaignForm() {
             <FormItem className="flex flex-col">
               <FormLabel>Fecha</FormLabel>
               <FormControl>
-                <Input
-                  type="date"
-                  value={date ? date.toISOString().split("T")[0] : ""}
-                  onChange={(e) => {
-                    const newDate = e.target.value ? new Date(e.target.value) : new Date();
-                    setDate(newDate);
-                    if (newDate) {
-                      logInfo("Date selected", { date: newDate.toISOString() });
-                    }
-                  }}
-                />
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                  <Input
+                    type="date"
+                    value={date ? date.toISOString().split("T")[0] : ""}
+                    onChange={(e) => {
+                      const newDate = e.target.value ? new Date(e.target.value) : new Date();
+                      setDate(newDate);
+                      if (newDate) {
+                        logInfo("Date selected", { date: newDate.toISOString() });
+                      }
+                    }}
+                    className="pl-10"
+                  />
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -320,17 +491,21 @@ export default function CampaignForm() {
             <FormItem>
               <FormLabel>Imagen Principal</FormLabel>
               <FormControl>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      await handleMainImageSelect(file);
-                    }
-                  }}
-                  disabled={isSubmitting}
-                />
+                <div className="relative">
+                  <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        await handleMainImageSelect(file);
+                      }
+                    }}
+                    disabled={isSubmitting}
+                    className="pl-10"
+                  />
+                </div>
               </FormControl>
               <FormMessage />
               {form.watch("image.url") && (
@@ -381,7 +556,7 @@ export default function CampaignForm() {
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                     <path
                       fillRule="evenodd"
-                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 011.414 1.414L11.414 10l4.293 4.293a1 1 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 01-1.414-1.414L8.586 10 4.293 5.707a1 1 010-1.414z"
                       clipRule="evenodd"
                     />
                   </svg>
@@ -394,9 +569,7 @@ export default function CampaignForm() {
               onClick={handleAddImage}
               disabled={isSubmitting}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
+              <Plus className="h-8 w-8" />
             </button>
           </div>
         </div>

@@ -7,6 +7,7 @@ import { uploadImageAction } from "@/actions/upload";
 import { addCarouselImageAction, deleteCarouselImageAction } from "@/actions/carousel";
 import { logError, convertForPreview } from "@/lib/utils";
 import { PlusCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 type ImageTypeKey = "hero" | "carousel";
 
@@ -22,6 +23,7 @@ const ImageManager = ({ images: initialImages, type, title, emptyMessage, minIma
   const [images, setImages] = useState<ImageType[]>(initialImages);
   const [error, setError] = useState<string | null>(null);
   const [uploadStatus, setUploadStatus] = useState<{ status: "idle" | "uploading" | "success" | "error"; message?: string }>({ status: "idle" });
+  const { toast } = useToast();
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -43,6 +45,13 @@ const ImageManager = ({ images: initialImages, type, title, emptyMessage, minIma
 
         setImages([...images, newImage]);
         setUploadStatus({ status: "success", message: "Upload successful!" });
+
+        // Show success toast
+        toast({
+          title: "Imagen subida",
+          description: `La imagen se ha subido correctamente.`,
+          variant: "default",
+        });
 
         e.target.value = "";
 
@@ -72,6 +81,13 @@ const ImageManager = ({ images: initialImages, type, title, emptyMessage, minIma
         setError(errorMessage);
         setUploadStatus({ status: "error", message: errorMessage });
 
+        // Show error toast
+        toast({
+          title: "Error al subir",
+          description: errorMessage,
+          variant: "destructive",
+        });
+
         e.target.value = "";
       }
     }
@@ -89,11 +105,25 @@ const ImageManager = ({ images: initialImages, type, title, emptyMessage, minIma
       }
 
       setImages(images.filter((img) => img.id !== id));
+
+      // Show success toast on delete
+      toast({
+        title: "Imagen eliminada",
+        description: "La imagen se ha eliminado correctamente.",
+        variant: "default",
+      });
     } catch (error) {
       const errorMessage = "Failed to delete image. Please try again.";
       logError(errorMessage, error);
 
       setError(errorMessage);
+
+      // Show error toast
+      toast({
+        title: "Error al eliminar",
+        description: errorMessage,
+        variant: "destructive",
+      });
     }
   };
 
@@ -139,7 +169,7 @@ const ImageManager = ({ images: initialImages, type, title, emptyMessage, minIma
                 priority
               />
               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity duration-300 flex items-center justify-center">
-                <span className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">{img.alt}</span>
+                {/* <span className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">{img.alt}</span> */}
               </div>
               <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <button

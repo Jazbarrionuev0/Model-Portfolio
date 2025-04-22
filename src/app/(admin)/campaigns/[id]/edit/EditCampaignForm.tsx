@@ -15,10 +15,12 @@ import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import { convertForPreview, logError } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 const EditCampaignForm = ({ campaign }: { campaign: Campaign }) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   const form = useForm<CreateCampaignSchema>({
     resolver: zodResolver(createCampaignSchema),
@@ -31,14 +33,33 @@ const EditCampaignForm = ({ campaign }: { campaign: Campaign }) => {
   const onSubmit = async (data: CreateCampaignSchema) => {
     try {
       setIsLoading(true);
+      toast({
+        title: "Actualizando...",
+        description: "Guardando los cambios de la campaña.",
+        variant: "warning",
+      });
+
       const username = data.brand.link;
       if (username && !username.startsWith("https://www.instagram.com/")) {
         data.brand.link = "https://www.instagram.com/" + username;
       }
 
       await updateCampaignAction({ ...data, id: campaign.id });
+
+      toast({
+        title: "¡Éxito!",
+        description: "La campaña ha sido actualizada correctamente.",
+        variant: "default",
+      });
+
       router.push("/campaigns");
     } catch (error) {
+      toast({
+        title: "Error",
+        description: "Ocurrió un problema al actualizar la campaña.",
+        variant: "destructive",
+      });
+
       form.setError("root", {
         message: error instanceof Error ? error.message : "Error al actualizar la campaña",
       });
