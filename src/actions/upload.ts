@@ -2,7 +2,9 @@
 
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { Image } from "@/types/image";
-import { logError } from "@/lib/utils";
+import { logError, logInfo } from "@/lib/utils";
+import heicConvert from "heic-convert";
+import sharp from "sharp";
 
 export async function uploadImageAction(file: File): Promise<Image> {
   if (!file) {
@@ -10,7 +12,48 @@ export async function uploadImageAction(file: File): Promise<Image> {
   }
 
   const timestamp = new Date().toISOString().replace(/[:.-]/g, "");
-  const extension = file.name.split(".").pop() || "";
+  let extension = file.name.split(".").pop()?.toLowerCase() || "";
+  const bytes = await file.arrayBuffer();
+  let buffer = Buffer.from(bytes);
+  let contentType = file.type;
+
+  // Check if the file is HEIC or HEIF format
+  const isHeic = ["heic", "heif"].includes(extension) || file.type === "image/heic" || file.type === "image/heif";
+
+  if (isHeic) {
+    logInfo("Converting HEIC/HEIF image to JPEG", { filename: file.name, originalType: file.type });
+    try {
+      // Convert HEIC/HEIF to JPEG using heic-convert
+      const jpegBuffer = await heicConvert({
+        buffer: buffer as unknown as ArrayBuffer, // Type casting to satisfy heic-convert's type requirements
+        format: "JPEG",
+        quality: 0.9,
+      });
+
+      // Update our variables with the converted image data
+      buffer = Buffer.from(jpegBuffer); // Convert result back to Buffer
+      extension = "jpg";
+      contentType = "image/jpeg";
+      logInfo("HEIC/HEIF conversion successful", { newType: contentType });
+    } catch (conversionError) {
+      logError("HEIC/HEIF conversion failed, trying Sharp as fallback", conversionError);
+
+      try {
+        // Fallback to using Sharp for conversion
+        const jpegBuffer = await sharp(buffer).jpeg({ quality: 90 }).toBuffer();
+
+        buffer = jpegBuffer;
+        extension = "jpg";
+        contentType = "image/jpeg";
+        logInfo("HEIC/HEIF conversion with Sharp successful", { newType: contentType });
+      } catch (sharpError) {
+        logError("All conversion methods failed", sharpError);
+        throw new Error("Failed to convert image format");
+      }
+    }
+  }
+
+  // Use the potentially modified extension for the filename
   const filename = `${timestamp}.${extension}`;
 
   const s3Client = new S3Client({
@@ -24,15 +67,12 @@ export async function uploadImageAction(file: File): Promise<Image> {
   });
 
   try {
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
     const command = new PutObjectCommand({
       Bucket: process.env.DO_SPACES_BUCKET,
       Key: filename,
       Body: buffer,
       ACL: "public-read",
-      ContentType: file.type,
+      ContentType: contentType, // Use the potentially updated content type
     });
 
     await s3Client.send(command);

@@ -5,7 +5,7 @@ import Image from "next/image";
 import { addHeroImageAction, deleteHeroImageAction } from "@/actions/hero";
 import { uploadImageAction } from "@/actions/upload";
 import { addCarouselImageAction, deleteCarouselImageAction } from "@/actions/carousel";
-import { logError } from "@/lib/utils";
+import { logError, convertForPreview } from "@/lib/utils";
 import { PlusCircle } from "lucide-react";
 
 type ImageTypeKey = "hero" | "carousel";
@@ -30,7 +30,10 @@ const ImageManager = ({ images: initialImages, type, title, emptyMessage, minIma
         setUploadStatus({ status: "uploading", message: `Uploading ${file.name}...` });
         setError(null);
 
-        const newImage = await uploadImageAction(file);
+        // Convert HEIC/HEIF files to JPEG for preview if needed
+        const processedFile = (await convertForPreview(file)) as File;
+
+        const newImage = await uploadImageAction(processedFile);
 
         if (type === "hero") {
           await addHeroImageAction(newImage);

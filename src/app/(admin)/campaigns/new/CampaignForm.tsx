@@ -11,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import Image from "next/image";
-import { logError, logInfo } from "@/lib/utils";
+import { logError, logInfo, convertForPreview } from "@/lib/utils";
 import { addCampaignAction } from "@/actions/campaign";
 import { uploadImageAction } from "@/actions/upload";
 import { Image as ImageType } from "@/types/image";
@@ -37,18 +37,24 @@ export default function CampaignForm() {
     defaultValues: defaultCreateCampaignSchema,
   });
 
-  const createPreview = (file: File): string => {
-    return URL.createObjectURL(file);
+  const createPreview = async (file: File): Promise<string> => {
+    try {
+      const processedFile = await convertForPreview(file);
+      return URL.createObjectURL(processedFile);
+    } catch (error) {
+      logError("Error creating preview", error);
+      return URL.createObjectURL(file);
+    }
   };
 
-  const addLocalImage = (file: File, type: string) => {
-    const previewUrl = createPreview(file);
+  const addLocalImage = async (file: File, type: string) => {
+    const previewUrl = await createPreview(file);
     setLocalImages((prev) => [...prev, { file, previewUrl, type }]);
     return previewUrl;
   };
 
-  const handleLogoSelect = (file: File) => {
-    const previewUrl = addLocalImage(file, "logo");
+  const handleLogoSelect = async (file: File) => {
+    const previewUrl = await addLocalImage(file, "logo");
     form.setValue("brand.logo", {
       url: previewUrl,
       id: Date.now(),
@@ -56,8 +62,8 @@ export default function CampaignForm() {
     });
   };
 
-  const handleMainImageSelect = (file: File) => {
-    const previewUrl = addLocalImage(file, "hero");
+  const handleMainImageSelect = async (file: File) => {
+    const previewUrl = await addLocalImage(file, "hero");
     form.setValue("image", {
       url: previewUrl,
       id: Date.now(),
@@ -65,8 +71,8 @@ export default function CampaignForm() {
     });
   };
 
-  const handleCarouselImageSelect = (file: File) => {
-    const previewUrl = addLocalImage(file, "carousel");
+  const handleCarouselImageSelect = async (file: File) => {
+    const previewUrl = await addLocalImage(file, "carousel");
     const currentImages = form.getValues("images");
     form.setValue("images", [
       ...currentImages,
@@ -233,10 +239,10 @@ export default function CampaignForm() {
                 <Input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => {
+                  onChange={async (e) => {
                     const file = e.target.files?.[0];
                     if (file) {
-                      handleLogoSelect(file);
+                      await handleLogoSelect(file);
                     }
                   }}
                   disabled={isSubmitting}
@@ -317,10 +323,10 @@ export default function CampaignForm() {
                 <Input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => {
+                  onChange={async (e) => {
                     const file = e.target.files?.[0];
                     if (file) {
-                      handleMainImageSelect(file);
+                      await handleMainImageSelect(file);
                     }
                   }}
                   disabled={isSubmitting}
@@ -359,17 +365,14 @@ export default function CampaignForm() {
                   onClick={() => {
                     logInfo("Removing additional image", { imageIndex: index, imageId: image.id });
 
-                    // Remove from localImages if it's a local preview
                     setLocalImages((prev) => prev.filter((img) => img.previewUrl !== image.url));
 
-                    // Remove from form state
                     const currentImages = form.getValues("images");
                     form.setValue(
                       "images",
                       currentImages.filter((_, i) => i !== index)
                     );
 
-                    // Revoke object URL if it's a local preview
                     if (image.alt.startsWith("temp-")) {
                       URL.revokeObjectURL(image.url);
                     }

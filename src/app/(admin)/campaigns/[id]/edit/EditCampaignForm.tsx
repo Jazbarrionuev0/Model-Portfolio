@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
+import { convertForPreview, logError } from "@/lib/utils";
 
 const EditCampaignForm = ({ campaign }: { campaign: Campaign }) => {
   const router = useRouter();
@@ -50,20 +51,27 @@ const EditCampaignForm = ({ campaign }: { campaign: Campaign }) => {
     const fileInput = document.createElement("input");
     fileInput.type = "file";
     fileInput.accept = "image/*";
-    fileInput.onchange = (e) => {
+    fileInput.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const newImage: ImageType = {
-            id: Date.now(),
-            url: reader.result as string,
-            alt: file.name,
+        try {
+          // Convert HEIC/HEIF to JPEG for preview if needed
+          const processedFile = await convertForPreview(file);
+
+          const reader = new FileReader();
+          reader.onload = () => {
+            const newImage: ImageType = {
+              id: Date.now(),
+              url: reader.result as string,
+              alt: file.name,
+            };
+            const currentImages = form.getValues("images");
+            form.setValue("images", [...currentImages, newImage]);
           };
-          const currentImages = form.getValues("images");
-          form.setValue("images", [...currentImages, newImage]);
-        };
-        reader.readAsDataURL(file);
+          reader.readAsDataURL(processedFile);
+        } catch (error) {
+          logError("Error processing image for preview", error);
+        }
       }
     };
     fileInput.click();
@@ -99,14 +107,21 @@ const EditCampaignForm = ({ campaign }: { campaign: Campaign }) => {
                   <Input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (file) {
-                        const reader = new FileReader();
-                        reader.onload = () => {
-                          form.setValue("brand.logo.url", reader.result as string);
-                        };
-                        reader.readAsDataURL(file);
+                        try {
+                          // Convert HEIC/HEIF to JPEG for preview if needed
+                          const processedFile = await convertForPreview(file);
+
+                          const reader = new FileReader();
+                          reader.onload = () => {
+                            form.setValue("brand.logo.url", reader.result as string);
+                          };
+                          reader.readAsDataURL(processedFile);
+                        } catch (error) {
+                          logError("Error processing logo image for preview", error);
+                        }
                       }
                     }}
                   />
@@ -162,18 +177,25 @@ const EditCampaignForm = ({ campaign }: { campaign: Campaign }) => {
                   <Input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (file) {
-                        const reader = new FileReader();
-                        reader.onload = () => {
-                          form.setValue("image", {
-                            ...form.getValues("image"),
-                            url: reader.result as string,
-                            alt: form.getValues("description") || file.name,
-                          });
-                        };
-                        reader.readAsDataURL(file);
+                        try {
+                          // Convert HEIC/HEIF to JPEG for preview if needed
+                          const processedFile = await convertForPreview(file);
+
+                          const reader = new FileReader();
+                          reader.onload = () => {
+                            form.setValue("image", {
+                              ...form.getValues("image"),
+                              url: reader.result as string,
+                              alt: form.getValues("description") || file.name,
+                            });
+                          };
+                          reader.readAsDataURL(processedFile);
+                        } catch (error) {
+                          logError("Error processing main image for preview", error);
+                        }
                       }
                     }}
                   />

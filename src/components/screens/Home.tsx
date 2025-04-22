@@ -24,7 +24,7 @@ const HeroSection = ({ profile, images }: { profile: Profile; images: ImageType[
 
   useEffect(() => {
     const handleScroll = () => {
-      if (!sectionRef.current || !contentRef.current) return;
+      if (typeof window === "undefined" || !sectionRef.current || !contentRef.current) return;
 
       const { top, bottom, height } = sectionRef.current.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
@@ -39,8 +39,10 @@ const HeroSection = ({ profile, images }: { profile: Profile; images: ImageType[
       }
     };
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    if (typeof window !== "undefined") {
+      window.addEventListener("scroll", handleScroll);
+      return () => window.removeEventListener("scroll", handleScroll);
+    }
   }, []);
 
   const nameParts = profile.name.split(" ");
