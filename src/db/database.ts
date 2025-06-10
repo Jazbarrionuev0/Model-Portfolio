@@ -6,7 +6,7 @@ import { Profile } from "@/types/profile";
 import { logError, logInfo } from "@/lib/utils";
 
 const redis = createClient({
-  url: process.env.REDIS_URL!,
+  url: process.env.REDIS!,
   socket: {
     tls: true,
     reconnectStrategy: (retries) => Math.min(retries * 50, 1000),
