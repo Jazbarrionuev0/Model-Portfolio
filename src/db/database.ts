@@ -5,6 +5,8 @@ import { deleteImageAction } from "@/actions/delete";
 import { Profile } from "@/types/profile";
 import { logError, logInfo } from "@/lib/utils";
 
+console.log("Redis URL (masked for security):", process.env.REDIS ? "***" : "undefined");
+
 const redis = createClient({
   url: process.env.REDIS!,
   socket: {
@@ -12,7 +14,19 @@ const redis = createClient({
     reconnectStrategy: (retries) => Math.min(retries * 50, 1000),
   },
 });
-redis.connect().catch((err) => logError("Redis connection error", err));
+
+redis.on("error", (err) => {
+  logError("Redis client error", err);
+  console.error("Redis client error:", err);
+});
+
+redis
+  .connect()
+  .then(() => console.log("Redis connected successfully"))
+  .catch((err) => {
+    logError("Redis connection error", err);
+    console.error("Redis connection error:", err);
+  });
 
 export const getHeroImages = async (): Promise<Image[]> => {
   try {

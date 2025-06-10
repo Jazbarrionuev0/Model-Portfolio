@@ -5,7 +5,13 @@ let redisClient: RedisClientType | null = null;
 
 export const getRedisClient = async (): Promise<RedisClientType> => {
   if (!redisClient) {
-    redisClient = createClient({ url: process.env.REDIS_URL! });
+    redisClient = createClient({
+      url: process.env.REDIS!,
+      socket: {
+        tls: true,
+        reconnectStrategy: (retries) => Math.min(retries * 50, 1000),
+      },
+    });
     await redisClient.connect().catch((err) => {
       logError("Redis connection error", err);
       throw err;

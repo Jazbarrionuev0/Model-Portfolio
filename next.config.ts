@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
   //     sizeLimit: "50mb",
   //   },
   // },
+  env: {
+    REDIS: process.env.REDIS,
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: "50mb",
