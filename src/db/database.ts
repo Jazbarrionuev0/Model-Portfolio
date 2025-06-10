@@ -5,7 +5,13 @@ import { deleteImageAction } from "@/actions/delete";
 import { Profile } from "@/types/profile";
 import { logError, logInfo } from "@/lib/utils";
 
-const redis = createClient({ url: process.env.REDIS_URL! });
+const redis = createClient({
+  url: process.env.REDIS_URL!,
+  socket: {
+    tls: true,
+    reconnectStrategy: (retries) => Math.min(retries * 50, 1000),
+  },
+});
 redis.connect().catch((err) => logError("Redis connection error", err));
 
 export const getHeroImages = async (): Promise<Image[]> => {
