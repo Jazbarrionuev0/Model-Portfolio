@@ -17,14 +17,16 @@ export async function getHeroImagesAction() {
 }
 
 export async function addHeroImageAction(image: Image) {
-  const { data, error } = await tryCatch(addHeroImage(image));
-  if (error) {
-    console.error("Error adding hero image:", error);
-    return undefined;
-  }
-  revalidatePath("/");
-  revalidatePath("/images");
-  return data;
+  const result = await tryCatch(
+    (async () => {
+      const data = await addHeroImage(image);
+      revalidatePath("/");
+      revalidatePath("/(admin)");
+      revalidatePath("/(admin)/images");
+      return data;
+    })()
+  );
+  return result;
 }
 
 export async function deleteHeroImageAction(id: number) {
@@ -34,7 +36,8 @@ export async function deleteHeroImageAction(id: number) {
     return undefined;
   }
   revalidatePath("/");
-  revalidatePath("/images");
+  revalidatePath("/(admin)");
+  revalidatePath("/(admin)/images");
 
   return data;
 }

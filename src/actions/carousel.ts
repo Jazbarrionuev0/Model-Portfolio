@@ -11,13 +11,15 @@ export async function getCarouselImagesAction() {
 export async function addCarouselImageAction(image: Image) {
   const result = await addCarouselImage(image);
   revalidatePath("/");
-  revalidatePath("/images");
+  revalidatePath("/(admin)");
+  revalidatePath("/(admin)/images");
   return result;
 }
 
 export async function deleteCarouselImageAction(id: number) {
   const result = await deleteCarouselImage(id);
   revalidatePath("/");
-  revalidatePath("/images");
+  revalidatePath("/(admin)");
+  revalidatePath("/(admin)/images");
   return result;
 }

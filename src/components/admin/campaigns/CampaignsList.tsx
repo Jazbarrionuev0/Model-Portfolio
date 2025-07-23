@@ -1,11 +1,15 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Campaign } from "@/types/campaign";
-import { deleteCampaignAction } from "@/actions/campaign";
-import { PlusCircle, Edit, Trash2, ExternalLink, Calendar } from "lucide-react";
+import { deleteCampaignAction, getCampaignsAction } from "@/actions/campaign";
+import { PlusCircle, Edit, Trash2, ExternalLink, Calendar, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+interface CampaignsListProps {
+  initialCampaigns: Campaign[];
+}
 
 interface CampaignsListProps {
   initialCampaigns: Campaign[];
@@ -15,7 +19,35 @@ const CampaignsList = ({ initialCampaigns }: CampaignsListProps) => {
   const router = useRouter();
   const [campaigns, setCampaigns] = useState<Campaign[]>(initialCampaigns);
   const [error, setError] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
+
+  // Sync with server data when initialCampaigns change
+  useEffect(() => {
+    setCampaigns(initialCampaigns);
+  }, [initialCampaigns]);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      const freshCampaigns = await getCampaignsAction();
+      setCampaigns(freshCampaigns);
+      toast({
+        title: "Actualizado",
+        description: "Los datos han sido actualizados correctamente.",
+        variant: "default",
+      });
+    } catch (error) {
+      console.error("Error refreshing campaigns:", error);
+      toast({
+        title: "Error",
+        description: "No se pudieron actualizar los datos.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const handleCreate = () => {
     router.push("/campaigns/new");
@@ -37,7 +69,11 @@ const CampaignsList = ({ initialCampaigns }: CampaignsListProps) => {
       });
 
       await deleteCampaignAction(id);
+      // Remove from client state immediately for optimistic UI
       setCampaigns(campaigns.filter((campaign) => campaign.id !== id));
+
+      // Refresh the page data to ensure consistency
+      router.refresh();
 
       toast({
         title: "Campaña eliminada",
@@ -47,6 +83,9 @@ const CampaignsList = ({ initialCampaigns }: CampaignsListProps) => {
     } catch (error) {
       console.error("Error deleting campaign:", error);
       setError(error instanceof Error ? error.message : "Error deleting campaign");
+
+      // Refresh to restore correct state on error
+      router.refresh();
 
       toast({
         title: "Error",
@@ -69,13 +108,23 @@ const CampaignsList = ({ initialCampaigns }: CampaignsListProps) => {
           <h2 className="text-3xl font-bold text-gray-800 mb-1">Campañas</h2>
           <p className="text-gray-500">Gestiona todas tus campañas publicitarias</p>
         </div>
-        <button
-          onClick={handleCreate}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-sm"
-        >
-          <PlusCircle size={18} />
-          <span>Crear Nueva</span>
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 shadow-sm disabled:opacity-50"
+          >
+            <RefreshCw size={18} className={isRefreshing ? "animate-spin" : ""} />
+            <span>Actualizar</span>
+          </button>
+          <button
+            onClick={handleCreate}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-sm"
+          >
+            <PlusCircle size={18} />
+            <span>Crear Nueva</span>
+          </button>
+        </div>
       </div>
 
       {campaigns.length === 0 ? (

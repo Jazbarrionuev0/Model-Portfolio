@@ -7,6 +7,10 @@ import { getCarouselImagesAction } from "@/actions/carousel";
 import HeroSection from "@/components/screens/Home";
 import { getProfileAction } from "@/actions/profile";
 
+// Force dynamic rendering for fresh data
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function Home() {
   const campaigns = await getCampaignsAction();
   const heroImages = await getHeroImagesAction();

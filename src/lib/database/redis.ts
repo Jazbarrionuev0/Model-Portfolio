@@ -26,21 +26,25 @@ export const getRedisData = async <T>(key: string): Promise<T[]> => {
     logInfo(`Fetching ${key} data`);
     const client = await getRedisClient();
     const data = await client.get(key);
-    return data ? JSON.parse(data) : [];
+    const result = data ? JSON.parse(data) : [];
+    logInfo(`Successfully fetched ${key} data`, { count: result.length });
+    return result;
   } catch (error) {
     logError(`Error fetching ${key} data`, error);
-    throw error;
+    // Return empty array instead of throwing to prevent complete app failure
+    return [];
   }
 };
 
 export const setRedisData = async <T>(key: string, data: T[]): Promise<void> => {
   try {
-    logInfo(`Setting ${key} data`);
+    logInfo(`Setting ${key} data`, { count: data.length });
     const client = await getRedisClient();
     await client.set(key, JSON.stringify(data));
     logInfo(`${key} data set successfully`);
   } catch (error) {
     logError(`Error setting ${key} data`, error);
-    throw error;
+    // Re-throw for write operations as we need to know if they failed
+    throw new Error(`Failed to save ${key} data: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 };

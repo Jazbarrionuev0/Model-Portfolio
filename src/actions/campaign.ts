@@ -3,9 +3,12 @@
 import { addCampaign, deleteCampaign, getCampaign, getCampaigns, updateCampaign } from "@/lib/database";
 import { Campaign } from "@/types/campaign";
 import { revalidatePath } from "next/cache";
+import { logCacheInfo, logRevalidation } from "@/lib/cache-debug";
 
 export async function getCampaignsAction() {
-  return await getCampaigns();
+  const campaigns = await getCampaigns();
+  logCacheInfo("getCampaignsAction", campaigns);
+  return campaigns;
 }
 
 export async function getCampaignAction(id: number) {
@@ -16,8 +19,12 @@ export async function getCampaignAction(id: number) {
 export async function addCampaignAction(campaign: Omit<Campaign, "id">) {
   try {
     const result = await addCampaign(campaign);
+    const pathsToRevalidate = ["/", "/(admin)", "/(admin)/campaigns"];
+    logRevalidation(pathsToRevalidate);
     revalidatePath("/");
-    revalidatePath("/campaigns");
+    revalidatePath("/(admin)");
+    revalidatePath("/(admin)/campaigns");
+    logCacheInfo("addCampaignAction", result);
     return result;
   } catch (error) {
     console.error("Error adding campaign:", error);
@@ -29,7 +36,9 @@ export async function updateCampaignAction(campaign: Campaign) {
   try {
     const result = await updateCampaign(campaign);
     revalidatePath("/");
-    revalidatePath("/campaigns");
+    revalidatePath("/(admin)");
+    revalidatePath("/(admin)/campaigns");
+    revalidatePath(`/campaign/${campaign.id}`);
     return result;
   } catch (error) {
     console.error("Error updating campaign:", error);
@@ -41,7 +50,8 @@ export async function deleteCampaignAction(id: number) {
   try {
     const result = await deleteCampaign(id);
     revalidatePath("/");
-    revalidatePath("/campaigns");
+    revalidatePath("/(admin)");
+    revalidatePath("/(admin)/campaigns");
     return result;
   } catch (error) {
     console.error("Error deleting campaign:", error);

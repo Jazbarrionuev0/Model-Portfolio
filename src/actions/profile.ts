@@ -17,6 +17,8 @@ export async function createProfileAction(profile: Profile): Promise<Profile> {
   try {
     const newProfile = await createProfile(profile);
     revalidatePath("/");
+    revalidatePath("/(admin)");
+    revalidatePath("/(admin)/profile");
     return newProfile;
   } catch (error) {
     console.error("Failed to create profile:", error);
@@ -28,6 +30,8 @@ export async function updateProfileAction(profile: Profile): Promise<Profile> {
   try {
     const updatedProfile = await updateProfile(profile);
     revalidatePath("/");
+    revalidatePath("/(admin)");
+    revalidatePath("/(admin)/profile");
     return updatedProfile;
   } catch (error) {
     console.error("Failed to update profile:", error);
