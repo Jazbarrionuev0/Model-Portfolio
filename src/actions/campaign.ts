@@ -19,8 +19,10 @@ export async function getCampaignAction(id: number) {
 
 export async function addCampaignAction(campaign: Omit<Campaign, "id">) {
   try {
-    logger.info("Starting campaign creation", "CAMPAIGN", { campaignData: { brand: campaign.brand.name, description: campaign.description.substring(0, 50) + "..." } });
-    
+    logger.info("Starting campaign creation", "CAMPAIGN", {
+      campaignData: { brand: campaign.brand.name, description: campaign.description.substring(0, 50) + "..." },
+    });
+
     const result = await addCampaign(campaign);
     const pathsToRevalidate = ["/", "/(admin)", "/(admin)/campaigns"];
     logRevalidation(pathsToRevalidate);
@@ -28,19 +30,19 @@ export async function addCampaignAction(campaign: Omit<Campaign, "id">) {
     revalidatePath("/(admin)");
     revalidatePath("/(admin)/campaigns");
     logCacheInfo("addCampaignAction", result);
-    
+
     logger.info("Campaign created successfully", "CAMPAIGN", { campaignId: result.id, campaignName: result.brand.name });
-    
+
     return result;
   } catch (error) {
-    logger.error("Campaign creation failed", "CAMPAIGN", error instanceof Error ? error : new Error(String(error)), { 
-      campaignData: { 
-        brandName: campaign.brand.name, 
+    logger.error("Campaign creation failed", "CAMPAIGN", error instanceof Error ? error : new Error(String(error)), {
+      campaignData: {
+        brandName: campaign.brand.name,
         description: campaign.description.substring(0, 50) + "...",
         hasLogo: !!campaign.brand.logo?.url,
         hasMainImage: !!campaign.image?.url,
-        additionalImages: campaign.images?.length || 0
-      }
+        additionalImages: campaign.images?.length || 0,
+      },
     });
     console.error("Error adding campaign:", error);
     throw error; // Re-throw to propagate to client
@@ -50,20 +52,20 @@ export async function addCampaignAction(campaign: Omit<Campaign, "id">) {
 export async function updateCampaignAction(campaign: Campaign) {
   try {
     logger.info("Starting campaign update", "CAMPAIGN", { campaignId: campaign.id, campaignName: campaign.brand.name });
-    
+
     const result = await updateCampaign(campaign);
     revalidatePath("/");
     revalidatePath("/(admin)");
     revalidatePath("/(admin)/campaigns");
     revalidatePath(`/campaign/${campaign.id}`);
-    
+
     logger.info("Campaign updated successfully", "CAMPAIGN", { campaignId: campaign.id, campaignName: campaign.brand.name });
-    
+
     return result;
   } catch (error) {
-    logger.error("Campaign update failed", "CAMPAIGN", error instanceof Error ? error : new Error(String(error)), { 
+    logger.error("Campaign update failed", "CAMPAIGN", error instanceof Error ? error : new Error(String(error)), {
       campaignId: campaign.id,
-      campaignName: campaign.brand.name
+      campaignName: campaign.brand.name,
     });
     console.error("Error updating campaign:", error);
     throw error;
@@ -73,18 +75,18 @@ export async function updateCampaignAction(campaign: Campaign) {
 export async function deleteCampaignAction(id: number) {
   try {
     logger.info("Starting campaign deletion", "CAMPAIGN", { campaignId: id });
-    
+
     const result = await deleteCampaign(id);
     revalidatePath("/");
     revalidatePath("/(admin)");
     revalidatePath("/(admin)/campaigns");
-    
+
     logger.info("Campaign deleted successfully", "CAMPAIGN", { campaignId: id });
-    
+
     return result;
   } catch (error) {
-    logger.error("Campaign deletion failed", "CAMPAIGN", error instanceof Error ? error : new Error(String(error)), { 
-      campaignId: id
+    logger.error("Campaign deletion failed", "CAMPAIGN", error instanceof Error ? error : new Error(String(error)), {
+      campaignId: id,
     });
     console.error("Error deleting campaign:", error);
     throw error;

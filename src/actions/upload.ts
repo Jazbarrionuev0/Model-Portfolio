@@ -14,10 +14,10 @@ export async function uploadImageAction(file: File): Promise<Image> {
     throw error;
   }
 
-  logger.info("Starting image upload", "UPLOAD", { 
-    filename: file.name, 
-    fileSize: file.size, 
-    fileType: file.type 
+  logger.info("Starting image upload", "UPLOAD", {
+    filename: file.name,
+    fileSize: file.size,
+    fileType: file.type,
   });
 
   const timestamp = new Date().toISOString().replace(/[:.-]/g, "");
@@ -30,9 +30,9 @@ export async function uploadImageAction(file: File): Promise<Image> {
   const isHeic = ["heic", "heif"].includes(extension) || file.type === "image/heic" || file.type === "image/heif";
 
   if (isHeic) {
-    logger.info("Converting HEIC/HEIF image to JPEG", "UPLOAD", { 
-      filename: file.name, 
-      originalType: file.type 
+    logger.info("Converting HEIC/HEIF image to JPEG", "UPLOAD", {
+      filename: file.name,
+      originalType: file.type,
     });
     logInfo("Converting HEIC/HEIF image to JPEG", { filename: file.name, originalType: file.type });
     try {
@@ -50,8 +50,11 @@ export async function uploadImageAction(file: File): Promise<Image> {
       logger.info("HEIC/HEIF conversion successful", "UPLOAD", { newType: contentType });
       logInfo("HEIC/HEIF conversion successful", { newType: contentType });
     } catch (conversionError) {
-      logger.warn("HEIC/HEIF conversion failed, trying Sharp as fallback", "UPLOAD", 
-        conversionError instanceof Error ? conversionError : new Error(String(conversionError)));
+      logger.warn(
+        "HEIC/HEIF conversion failed, trying Sharp as fallback",
+        "UPLOAD",
+        conversionError instanceof Error ? conversionError : new Error(String(conversionError))
+      );
       logError("HEIC/HEIF conversion failed, trying Sharp as fallback", conversionError);
 
       try {
@@ -69,7 +72,7 @@ export async function uploadImageAction(file: File): Promise<Image> {
           filename: file.name,
           originalType: file.type,
           heicError: conversionError instanceof Error ? conversionError.message : String(conversionError),
-          sharpError: sharpError instanceof Error ? sharpError.message : String(sharpError)
+          sharpError: sharpError instanceof Error ? sharpError.message : String(sharpError),
         });
         logError("All conversion methods failed", sharpError);
         throw error;
@@ -86,7 +89,7 @@ export async function uploadImageAction(file: File): Promise<Image> {
     hasRegion: !!process.env.DO_SPACES_REGION,
     hasKey: !!process.env.DO_SPACES_KEY,
     hasSecret: !!process.env.DO_SPACES_SECRET,
-    hasBucket: !!process.env.DO_SPACES_BUCKET
+    hasBucket: !!process.env.DO_SPACES_BUCKET,
   });
 
   const s3Client = new S3Client({
@@ -104,7 +107,7 @@ export async function uploadImageAction(file: File): Promise<Image> {
       bucket: process.env.DO_SPACES_BUCKET,
       key: filename,
       contentType,
-      bufferSize: buffer.length
+      bufferSize: buffer.length,
     });
 
     const command = new PutObjectCommand({
@@ -123,7 +126,7 @@ export async function uploadImageAction(file: File): Promise<Image> {
       filename,
       imageUrl,
       statusCode: result.$metadata?.httpStatusCode,
-      eTag: result.ETag
+      eTag: result.ETag,
     });
 
     return {
@@ -140,7 +143,7 @@ export async function uploadImageAction(file: File): Promise<Image> {
       bufferSize: buffer.length,
       errorMessage: uploadError.message,
       hasEndpoint: !!process.env.DO_SPACES_ENDPOINT,
-      hasCredentials: !!(process.env.DO_SPACES_KEY && process.env.DO_SPACES_SECRET)
+      hasCredentials: !!(process.env.DO_SPACES_KEY && process.env.DO_SPACES_SECRET),
     });
     logError("Error uploading image", error);
     throw new Error("Failed to upload image");
