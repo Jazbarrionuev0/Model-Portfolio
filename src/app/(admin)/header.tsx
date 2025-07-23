@@ -38,6 +38,14 @@ export default function Header() {
               Perfil
             </Link>
           </li>
+          <li className="w-full sm:w-auto">
+            <Link
+              href="/logs"
+              className="block text-center sm:inline-block w-full text-gray-700 hover:text-blue-600 font-medium transition-colors px-3 py-2 rounded-md hover:bg-gray-50"
+            >
+              Logs
+            </Link>
+          </li>
         </ul>
       </nav>
     </header>

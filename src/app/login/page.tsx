@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { createCookie, deleteCookie } from "../../actions/cookie";
-import bcrypt from "bcryptjs";
 import { useRouter } from "next/navigation";
 export default function UploadPage() {
   const [password, setPassword] = useState("");
@@ -35,18 +34,24 @@ export default function UploadPage() {
     setIsLoading(true);
 
     try {
-      // Directly compare with expected password
-      const expectedPassword = process.env.NEXT_PUBLIC_PASSWORD;
+      // Send password to server for validation - don't expose it client-side
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ password }),
+      });
 
-      if (password === expectedPassword) {
-        // Set the auth cookie with a simple value
-        const sessionToken = await bcrypt.hash(password, 10);
-        await createCookie("auth", sessionToken);
+      if (response.ok) {
+        const { token } = await response.json();
+        await createCookie("auth", token);
         setIsLoggedIn(true);
         setError("");
         router.push("/images");
       } else {
-        setError("Invalid password");
+        const { error: serverError } = await response.json();
+        setError(serverError || "Invalid password");
       }
     } catch (error) {
       console.error("Login error:", error);

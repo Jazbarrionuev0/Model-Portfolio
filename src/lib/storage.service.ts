@@ -1,6 +1,6 @@
 import { Image } from "@/types/image";
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
-import { logError, logInfo } from "./utils";
+import { logger } from "./logger";
 
 class StorageService {
   private s3Client: S3Client;
@@ -8,7 +8,7 @@ class StorageService {
   private endpoint: string;
 
   constructor(endpoint: string, region: string, key: string, secret: string, bucket: string) {
-    logInfo("Initializing StorageService", {
+    logger.info("Initializing StorageService", "STORAGE", {
       endpoint,
       region,
       bucket,
@@ -17,6 +17,20 @@ class StorageService {
       environment: process.env.NODE_ENV,
       isVercel: !!process.env.VERCEL,
     });
+
+    // Validate required parameters
+    if (!endpoint || !region || !key || !secret || !bucket) {
+      const missing = [];
+      if (!endpoint) missing.push("endpoint");
+      if (!region) missing.push("region");
+      if (!key) missing.push("key");
+      if (!secret) missing.push("secret");
+      if (!bucket) missing.push("bucket");
+
+      const error = new Error(`Missing required S3 configuration: ${missing.join(", ")}`);
+      logger.error("StorageService initialization failed", "STORAGE", error, { missing });
+      throw error;
+    }
 
     try {
       this.s3Client = new S3Client({
@@ -30,9 +44,9 @@ class StorageService {
       });
       this.bucket = bucket;
       this.endpoint = endpoint;
-      logInfo("StorageService initialized successfully");
+      logger.info("StorageService initialized successfully", "STORAGE");
     } catch (error) {
-      logError("Failed to initialize S3Client", error);
+      logger.error("Failed to initialize S3Client", "STORAGE", error as Error);
       throw error;
     }
   }
@@ -42,7 +56,7 @@ class StorageService {
     const extension = file.name.split(".").pop() || "";
     const filename = `${timestamp}.${extension}`;
 
-    logInfo("Starting S3 upload", {
+    logger.info("Starting S3 upload", "STORAGE", {
       originalFilename: file.name,
       generatedFilename: filename,
       fileSize: file.size,
@@ -54,10 +68,12 @@ class StorageService {
     try {
       // Convert File to ArrayBuffer
       const arrayBuffer = await file.arrayBuffer();
-      console.log("arrayBuffer", arrayBuffer);
+      logger.debug("File converted to ArrayBuffer", "STORAGE", {
+        arrayBufferSize: arrayBuffer.byteLength,
+      });
+
       // Convert ArrayBuffer to Buffer for S3
       const buffer = Buffer.from(arrayBuffer);
-      debugger;
 
       const command = new PutObjectCommand({
         Bucket: this.bucket,
@@ -67,26 +83,32 @@ class StorageService {
         ContentType: file.type || this.getMimeType(extension),
       });
 
-      logInfo("Sending PutObjectCommand to S3", {
+      logger.info("Sending PutObjectCommand to S3", "STORAGE", {
         bucket: this.bucket,
         key: filename,
         contentType: file.type || this.getMimeType(extension),
         aclSetting: "public-read",
+        bufferSize: buffer.length,
       });
 
       const result = await this.s3Client.send(command);
 
-      logInfo("S3 upload successful", {
+      logger.info("S3 upload successful", "STORAGE", {
         filename,
         eTag: result.ETag,
         statusCode: result.$metadata?.httpStatusCode,
       });
     } catch (error) {
-      logError("S3 upload error", error);
+      logger.error("S3 upload failed", "STORAGE", error as Error, {
+        bucket: this.bucket,
+        filename,
+        fileType: file.type,
+        fileSize: file.size,
+      });
 
       if (error && typeof error === "object" && "$metadata" in error) {
         const metadata = (error as { $metadata: Record<string, unknown> }).$metadata;
-        logError("S3 error metadata", {
+        logger.error("S3 error metadata", "STORAGE", undefined, {
           requestId: metadata?.requestId,
           cfId: metadata?.cfId,
           extendedRequestId: metadata?.extendedRequestId,
@@ -96,7 +118,7 @@ class StorageService {
         });
       }
 
-      throw new Error("Failed to upload file to storage");
+      throw new Error(`Failed to upload file to storage: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
 
     const image: Omit<Image, "id"> = {
@@ -112,7 +134,10 @@ class StorageService {
       const urlParts = imagePath.split("/");
       const filename = urlParts[urlParts.length - 1];
 
-      logInfo("Starting S3 delete operation", { imagePath, extractedFilename: filename });
+      logger.info("Starting S3 delete operation", "STORAGE", {
+        imagePath,
+        extractedFilename: filename,
+      });
 
       await this.s3Client.send(
         new DeleteObjectCommand({
@@ -121,10 +146,10 @@ class StorageService {
         })
       );
 
-      logInfo("S3 delete successful", { filename });
+      logger.info("S3 delete successful", "STORAGE", { filename });
     } catch (error) {
-      logError("S3 delete error", error);
-      throw new Error("Failed to delete file from storage");
+      logger.error("S3 delete failed", "STORAGE", error as Error, { imagePath });
+      throw new Error(`Failed to delete file from storage: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   }
 
@@ -158,17 +183,10 @@ class StorageService {
   }
 }
 
+// Environment variables validation
 const { DO_SPACES_ENDPOINT, DO_SPACES_REGION, DO_SPACES_KEY, DO_SPACES_SECRET, DO_SPACES_BUCKET } = process.env;
 
-console.log({
-  DO_SPACES_ENDPOINT,
-  DO_SPACES_REGION,
-  DO_SPACES_KEY,
-  DO_SPACES_SECRET,
-  DO_SPACES_BUCKET,
-});
-
-logInfo("Environment variables check", {
+logger.info("Environment variables check", "STORAGE", {
   endpointProvided: !!DO_SPACES_ENDPOINT,
   regionProvided: !!DO_SPACES_REGION,
   keyProvided: !!DO_SPACES_KEY,
@@ -176,14 +194,22 @@ logInfo("Environment variables check", {
   bucketProvided: !!DO_SPACES_BUCKET,
   environment: process.env.NODE_ENV,
   isVercel: !!process.env.VERCEL,
-} as Record<string, unknown>);
+});
 
-const storageService = new StorageService(
-  String(DO_SPACES_ENDPOINT),
-  String(DO_SPACES_REGION),
-  String(DO_SPACES_KEY),
-  String(DO_SPACES_SECRET),
-  String(DO_SPACES_BUCKET)
-);
+// Validate configuration before creating service
+if (!DO_SPACES_ENDPOINT || !DO_SPACES_REGION || !DO_SPACES_KEY || !DO_SPACES_SECRET || !DO_SPACES_BUCKET) {
+  const missing = [];
+  if (!DO_SPACES_ENDPOINT) missing.push("DO_SPACES_ENDPOINT");
+  if (!DO_SPACES_REGION) missing.push("DO_SPACES_REGION");
+  if (!DO_SPACES_KEY) missing.push("DO_SPACES_KEY");
+  if (!DO_SPACES_SECRET) missing.push("DO_SPACES_SECRET");
+  if (!DO_SPACES_BUCKET) missing.push("DO_SPACES_BUCKET");
+
+  const error = new Error(`Missing required environment variables: ${missing.join(", ")}`);
+  logger.error("StorageService configuration error", "STORAGE", error, { missing });
+  throw error;
+}
+
+const storageService = new StorageService(DO_SPACES_ENDPOINT, DO_SPACES_REGION, DO_SPACES_KEY, DO_SPACES_SECRET, DO_SPACES_BUCKET);
 
 export default storageService;
