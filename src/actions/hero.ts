@@ -8,19 +8,15 @@ import { logger } from "@/lib/logger";
 
 export async function getHeroImagesAction() {
   try {
-    logger.info("Fetching hero images", "HERO_IMAGES");
     const { data, error } = await tryCatch(getHeroImages());
 
     if (error) {
-      logger.error("Failed to fetch hero images", "HERO_IMAGES", error instanceof Error ? error : new Error(String(error)));
       console.error("Error fetching hero images:", error);
       return [];
     }
 
-    logger.info("Hero images fetched successfully", "HERO_IMAGES", { imageCount: data?.length || 0 });
     return data;
   } catch (error) {
-    logger.error("Unexpected error in getHeroImagesAction", "HERO_IMAGES", error instanceof Error ? error : new Error(String(error)));
     console.error("Error fetching hero images:", error);
     return [];
   }

@@ -34,7 +34,7 @@ export default function LogsViewer() {
   const [availableContexts, setAvailableContexts] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState<LogFilters>({});
-  const [limit, setLimit] = useState(100);
+  const [limit, setLimit] = useState(10);
   const [sinceDate, setSinceDate] = useState<Date | undefined>(undefined);
   const [untilDate, setUntilDate] = useState<Date | undefined>(undefined);
   const [sinceOpen, setSinceOpen] = useState(false);
@@ -152,13 +152,6 @@ export default function LogsViewer() {
     fetchLogs(true);
   };
 
-  const clearFilters = () => {
-    setFilters({});
-    setSinceDate(undefined);
-    setUntilDate(undefined);
-    fetchLogs(false);
-  };
-
   useEffect(() => {
     fetchLogs();
     fetchContexts();
@@ -184,29 +177,25 @@ export default function LogsViewer() {
     return new Date(timestamp).toLocaleString();
   };
 
-  const now = new Date();
-  const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-  const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Application Logs</h1>
-        <button onClick={clearLogs} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
-          Clear All Logs
-        </button>
-      </div>
-
       {/* Enhanced Filters Section */}
       <div className="bg-white rounded-lg shadow-sm border mb-6">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Search & Filter Logs</h3>
-          <p className="text-sm text-gray-600 mt-1">Filter logs by level, context, date range, or use quick filters</p>
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Search & Filter Logs</h3>
+              <p className="text-sm text-gray-600 mt-1">Filter logs by level, context, and date range</p>
+            </div>
+            <button onClick={clearLogs} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+              Clear All Logs
+            </button>
+          </div>
         </div>
 
         <div className="p-6">
-          {/* Main Filter Row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+          {/* All Filters in One Row */}
+          <div className="grid grid-cols-6 gap-4 items-end">
             {/* Level Filter */}
             <div className="space-y-2">
               <Label className="text-sm font-medium text-gray-700">Log Level</Label>
@@ -267,7 +256,7 @@ export default function LogsViewer() {
               </Select>
             </div>
 
-            {/* Date Range Filters */}
+            {/* From Date Filter */}
             <div className="space-y-2">
               <Label className="text-sm font-medium text-gray-700">From Date</Label>
               <Popover open={sinceOpen} onOpenChange={setSinceOpen}>
@@ -300,6 +289,7 @@ export default function LogsViewer() {
               </Popover>
             </div>
 
+            {/* To Date Filter */}
             <div className="space-y-2">
               <Label className="text-sm font-medium text-gray-700">To Date</Label>
               <Popover open={untilOpen} onOpenChange={setUntilOpen}>
@@ -331,79 +321,34 @@ export default function LogsViewer() {
                 </PopoverContent>
               </Popover>
             </div>
-          </div>
 
-          {/* Quick Filters */}
-          <div className="border-t border-gray-200 pt-4 mb-6">
-            <Label className="text-sm font-medium text-gray-700 mb-3 block">Quick Filters</Label>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  handleDateChange("since", oneHourAgo);
-                  handleDateChange("until", undefined);
-                }}
-                className="text-xs"
-              >
-                Last Hour
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  handleDateChange("since", oneDayAgo);
-                  handleDateChange("until", undefined);
-                }}
-                className="text-xs"
-              >
-                Last 24 Hours
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setFilters((prev) => ({ ...prev, level: "3" }));
-                }}
-                className="text-xs bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
-              >
-                Errors Only
-              </Button>
-              <Button variant="outline" size="sm" onClick={clearFilters} className="text-xs text-gray-600">
-                Clear All
-              </Button>
-            </div>
-          </div>
-
-          {/* Action Bar */}
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between bg-gray-50 p-4 rounded-lg">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Label className="text-sm font-medium text-gray-700">Show:</Label>
-                <Select value={limit.toString()} onValueChange={(value) => setLimit(parseInt(value))}>
-                  <SelectTrigger className="w-20">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="50">50</SelectItem>
-                    <SelectItem value="100">100</SelectItem>
-                    <SelectItem value="200">200</SelectItem>
-                    <SelectItem value="500">500</SelectItem>
-                  </SelectContent>
-                </Select>
-                <span className="text-sm text-gray-600">entries</span>
-              </div>
+            {/* Show Entries Filter */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-700">Show</Label>
+              <Select value={limit.toString()} onValueChange={(value) => setLimit(parseInt(value))}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                  <SelectItem value="200">200</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <div className="flex gap-3">
-              <Button onClick={applyFilters} disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white px-6">
+            {/* Apply Filters Button */}
+            <div>
+              <Button onClick={applyFilters} disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white px-6 w-full">
                 {loading ? (
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Searching...
+                    Loading...
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2">Apply Filters</div>
+                  "Apply Filters"
                 )}
               </Button>
             </div>
@@ -413,19 +358,6 @@ export default function LogsViewer() {
 
       {/* Enhanced Logs Table */}
       <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-        <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">Application Logs</h3>
-              <p className="text-sm text-gray-600 mt-1">
-                Showing {logs.length} {logs.length === limit ? `of ${limit}+` : ""} entries
-                {(filters.level || filters.context || filters.since || filters.until) && (
-                  <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">Filtered</span>
-                )}
-              </p>
-            </div>
-          </div>
-        </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">

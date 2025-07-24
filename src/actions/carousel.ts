@@ -7,12 +7,10 @@ import { logger } from "@/lib/logger";
 
 export async function getCarouselImagesAction() {
   try {
-    logger.info("Fetching carousel images", "CAROUSEL_IMAGES");
     const result = await getCarouselImages();
-    logger.info("Carousel images fetched successfully", "CAROUSEL_IMAGES", { imageCount: result?.length || 0 });
     return result;
   } catch (error) {
-    logger.error("Failed to fetch carousel images", "CAROUSEL_IMAGES", error instanceof Error ? error : new Error(String(error)));
+    console.error("Failed to fetch carousel images:", error);
     throw error;
   }
 }
