@@ -29,7 +29,7 @@ export const campaignSchema = z.object({
   image: imageSchema.nullable().refine((val) => val !== null, {
     message: "La imagen principal es obligatoria",
   }),
-  images: z.array(imageSchema).min(1, "Tiene que haber al menos una imagen adicional"),
+  images: z.array(imageSchema).default([]),
   date: z.date({
     required_error: "La fecha es requerida",
     invalid_type_error: "La fecha no es válida",

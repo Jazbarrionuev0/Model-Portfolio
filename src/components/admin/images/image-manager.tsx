@@ -6,7 +6,7 @@ import { addHeroImageAction, deleteHeroImageAction } from "@/actions/hero";
 import { uploadImageAction } from "@/actions/upload";
 import { addCarouselImageAction, deleteCarouselImageAction } from "@/actions/carousel";
 import { logError, convertForPreview } from "@/lib/utils";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 type ImageTypeKey = "hero" | "carousel";
@@ -29,8 +29,14 @@ const ImageManager = ({ images: initialImages, type, title, emptyMessage, minIma
     const file = e.target.files?.[0];
     if (file) {
       try {
-        setUploadStatus({ status: "uploading", message: `Uploading ${file.name}...` });
+        setUploadStatus({ status: "uploading", message: `Subiendo ${file.name}...` });
         setError(null);
+
+        // Show loading toast
+        toast({
+          title: "Subiendo imagen...",
+          description: `Procesando ${file.name}`,
+        });
 
         // Convert HEIC/HEIF files to JPEG for preview if needed
         const processedFile = (await convertForPreview(file)) as File;
@@ -48,8 +54,8 @@ const ImageManager = ({ images: initialImages, type, title, emptyMessage, minIma
 
         // Show success toast
         toast({
-          title: "Imagen subida",
-          description: `La imagen se ha subido correctamente.`,
+          title: "¡Imagen subida!",
+          description: `${file.name} se ha subido correctamente.`,
           variant: "default",
         });
 
@@ -59,20 +65,20 @@ const ImageManager = ({ images: initialImages, type, title, emptyMessage, minIma
           setUploadStatus({ status: "idle" });
         }, 3000);
       } catch (error) {
-        let errorMessage = "Failed to upload image. Please try again.";
+        let errorMessage = "Error al subir la imagen. Inténtalo de nuevo.";
 
         if (error instanceof Response) {
           try {
             const errorText = await error.text();
             console.error("[CLIENT_ERROR] Server response:", errorText);
-            errorMessage = `Server error: ${error.status} ${error.statusText}. Details: ${errorText}`;
+            errorMessage = `Error del servidor: ${error.status} ${error.statusText}`;
           } catch (textError) {
             console.error("[CLIENT_ERROR] Failed to read error response text:", textError);
           }
         } else if (error instanceof Error) {
           console.error("[CLIENT_ERROR] Error message:", error.message);
           console.error("[CLIENT_ERROR] Error stack:", error.stack);
-          errorMessage = `Error: ${error.message}`;
+          errorMessage = error.message.includes("size") ? "La imagen es demasiado grande. Máximo 5MB." : `Error: ${error.message}`;
         } else {
           console.error("[CLIENT_ERROR] Unexpected error type:", typeof error);
           console.error("[CLIENT_ERROR] Stringified error:", JSON.stringify(error));
@@ -83,7 +89,7 @@ const ImageManager = ({ images: initialImages, type, title, emptyMessage, minIma
 
         // Show error toast
         toast({
-          title: "Error al subir",
+          title: "Error al subir imagen",
           description: errorMessage,
           variant: "destructive",
         });
@@ -94,10 +100,17 @@ const ImageManager = ({ images: initialImages, type, title, emptyMessage, minIma
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Estas segura que queres eliminar esta imagen?")) return;
+    if (!confirm("¿Estás segura que quieres eliminar esta imagen?")) return;
 
     try {
       setError(null);
+
+      // Show loading toast for delete action
+      toast({
+        title: "Eliminando imagen...",
+        description: "Procesando solicitud...",
+      });
+
       if (type === "hero") {
         await deleteHeroImageAction(id);
       } else if (type === "carousel") {
@@ -113,7 +126,7 @@ const ImageManager = ({ images: initialImages, type, title, emptyMessage, minIma
         variant: "default",
       });
     } catch (error) {
-      const errorMessage = "Failed to delete image. Please try again.";
+      const errorMessage = "Error al eliminar la imagen. Inténtalo de nuevo.";
       logError(errorMessage, error);
 
       setError(errorMessage);
@@ -131,12 +144,36 @@ const ImageManager = ({ images: initialImages, type, title, emptyMessage, minIma
     <div className="mb-12">
       {error && <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">{error}</div>}
 
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <h2 className="text-2xl font-bold text-gray-800">{title}</h2>
-        <label className="bg-blue-500 text-white px-4 py-2 rounded-lg cursor-pointer hover:bg-blue-600 transition-colors flex items-center gap-2">
-          <PlusCircle size={18} />
-          Agregar Imágen
-          <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={uploadStatus.status === "uploading"} />
+        <label
+          className={`
+          ${uploadStatus.status === "uploading" ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600 cursor-pointer"} 
+          text-white px-4 py-2.5 rounded-lg transition-all duration-200 flex items-center gap-2 
+          ${uploadStatus.status === "uploading" ? "" : "hover:shadow-md transform hover:scale-105"}
+          min-w-fit
+        `}
+        >
+          {uploadStatus.status === "uploading" ? (
+            <>
+              <Loader2 size={18} className="animate-spin" />
+              <span className="hidden sm:inline">Subiendo...</span>
+              <span className="sm:hidden">Subiendo</span>
+            </>
+          ) : (
+            <>
+              <PlusCircle size={18} />
+              <span className="hidden sm:inline">Agregar Imagen</span>
+              <span className="sm:hidden">Agregar</span>
+            </>
+          )}
+          <input
+            type="file"
+            accept="image/*,image/heic,image/heif"
+            className="hidden"
+            onChange={handleFileUpload}
+            disabled={uploadStatus.status === "uploading"}
+          />
         </label>
       </div>
       {images.length === 0 ? (

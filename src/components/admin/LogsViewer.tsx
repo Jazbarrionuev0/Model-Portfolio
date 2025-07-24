@@ -188,14 +188,14 @@ export default function LogsViewer() {
               <p className="text-sm text-gray-600 mt-1">Filter logs by level, context, and date range</p>
             </div>
             <button onClick={clearLogs} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
-              Clear All Logs
+              Clear Logs
             </button>
           </div>
         </div>
 
         <div className="p-6">
           {/* All Filters in One Row */}
-          <div className="grid grid-cols-6 gap-4 items-end">
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
             {/* Level Filter */}
             <div className="space-y-2">
               <Label className="text-sm font-medium text-gray-700">Log Level</Label>

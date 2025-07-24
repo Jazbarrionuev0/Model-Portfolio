@@ -55,37 +55,104 @@ export default function CampaignForm() {
   };
 
   const handleLogoSelect = async (file: File) => {
-    const previewUrl = await addLocalImage(file, "logo");
-    form.setValue("brand.logo", {
-      url: previewUrl,
-      id: Date.now(),
-      alt: "temp-" + file.name,
-    });
-  };
+    try {
+      toast({
+        title: "Subiendo logo...",
+        description: `Procesando ${file.name}`,
+      });
 
-  const handleMainImageSelect = async (file: File) => {
-    const previewUrl = await addLocalImage(file, "hero");
-    form.setValue("image", {
-      url: previewUrl,
-      id: Date.now(),
-      alt: "temp-" + file.name,
-    });
-  };
-
-  const handleCarouselImageSelect = async (file: File) => {
-    const previewUrl = await addLocalImage(file, "carousel");
-    const currentImages = form.getValues("images");
-    form.setValue("images", [
-      ...currentImages,
-      {
+      const previewUrl = await addLocalImage(file, "logo");
+      form.setValue("brand.logo", {
         url: previewUrl,
         id: Date.now(),
         alt: "temp-" + file.name,
-      },
-    ]);
+      });
+
+      toast({
+        title: "Logo cargado",
+        description: "El logo se ha cargado correctamente",
+        variant: "default",
+      });
+    } catch (error) {
+      toast({
+        title: "Error al cargar logo",
+        description: "No se pudo cargar el logo. Inténtalo de nuevo.",
+        variant: "destructive",
+      });
+      logError("Error loading logo", error);
+    }
+  };
+
+  const handleMainImageSelect = async (file: File) => {
+    try {
+      toast({
+        title: "Subiendo imagen principal...",
+        description: `Procesando ${file.name}`,
+      });
+
+      const previewUrl = await addLocalImage(file, "hero");
+      form.setValue("image", {
+        url: previewUrl,
+        id: Date.now(),
+        alt: "temp-" + file.name,
+      });
+
+      toast({
+        title: "Imagen principal cargada",
+        description: "La imagen principal se ha cargado correctamente",
+        variant: "default",
+      });
+    } catch (error) {
+      toast({
+        title: "Error al cargar imagen",
+        description: "No se pudo cargar la imagen principal. Inténtalo de nuevo.",
+        variant: "destructive",
+      });
+      logError("Error loading main image", error);
+    }
+  };
+
+  const handleCarouselImageSelect = async (file: File) => {
+    try {
+      toast({
+        title: "Subiendo imagen adicional...",
+        description: `Procesando ${file.name}`,
+      });
+
+      const previewUrl = await addLocalImage(file, "carousel");
+      const currentImages = form.getValues("images");
+      form.setValue("images", [
+        ...currentImages,
+        {
+          url: previewUrl,
+          id: Date.now(),
+          alt: "temp-" + file.name,
+        },
+      ]);
+
+      toast({
+        title: "Imagen adicional cargada",
+        description: "La imagen se ha añadido correctamente",
+        variant: "default",
+      });
+    } catch (error) {
+      toast({
+        title: "Error al cargar imagen",
+        description: "No se pudo cargar la imagen adicional. Inténtalo de nuevo.",
+        variant: "destructive",
+      });
+      logError("Error loading carousel image", error);
+    }
   };
 
   const uploadAllImages = async () => {
+    if (localImages.length === 0) return true;
+
+    toast({
+      title: "Subiendo imágenes...",
+      description: `Subiendo ${localImages.length} imagen${localImages.length > 1 ? "es" : ""} al servidor`,
+    });
+
     const uploadPromises = localImages.map(async (localImage) => {
       try {
         const uploadedImage = await uploadImageAction(localImage.file);
@@ -95,6 +162,11 @@ export default function CampaignForm() {
         };
       } catch (error) {
         logError(`Error uploading ${localImage.type} image`, error);
+        toast({
+          title: "Error al subir imagen",
+          description: `No se pudo subir la imagen ${localImage.type}`,
+          variant: "destructive",
+        });
         return {
           local: localImage,
           uploaded: null,
@@ -120,7 +192,23 @@ export default function CampaignForm() {
 
     localImages.forEach((img) => URL.revokeObjectURL(img.previewUrl));
 
-    return results.every((r) => r.uploaded !== null);
+    const allUploaded = results.every((r) => r.uploaded !== null);
+
+    if (allUploaded) {
+      toast({
+        title: "Imágenes subidas",
+        description: "Todas las imágenes se han subido correctamente",
+        variant: "default",
+      });
+    } else {
+      toast({
+        title: "Error en algunas imágenes",
+        description: "No se pudieron subir todas las imágenes",
+        variant: "destructive",
+      });
+    }
+
+    return allUploaded;
   };
 
   const cleanInstagramUsername = (username: string): string => {
@@ -200,16 +288,6 @@ export default function CampaignForm() {
       isValid = false;
     }
 
-    // Additional images validation
-    if (!formData.images || formData.images.length === 0) {
-      toast({
-        title: "Campo requerido",
-        description: "Tiene que haber al menos una imagen adicional",
-        variant: "warning",
-      });
-      isValid = false;
-    }
-
     // Description validation
     if (!formData.description || formData.description.trim() === "") {
       toast({
@@ -269,9 +347,8 @@ export default function CampaignForm() {
       }
 
       toast({
-        title: "Enviando...",
-        description: "Guardando la información de la campaña.",
-        variant: "warning",
+        title: "Creando campaña...",
+        description: "Validando datos y subiendo archivos",
       });
 
       // Clean Instagram username if provided
@@ -290,14 +367,19 @@ export default function CampaignForm() {
       const uploadSuccess = await uploadAllImages();
       if (!uploadSuccess) {
         toast({
-          title: "Error",
-          description: "No se pudieron cargar una o más imágenes",
+          title: "Error al subir imágenes",
+          description: "No se pudieron cargar una o más imágenes. Revisa tu conexión e inténtalo de nuevo.",
           variant: "destructive",
         });
         form.setError("root", { message: "No se pudieron cargar una o más imágenes" });
         setIsSubmitting(false);
         return;
       }
+
+      toast({
+        title: "Guardando campaña...",
+        description: "Finalizando la creación de la campaña",
+      });
 
       const updatedData = form.getValues();
       await addCampaignAction({
@@ -309,7 +391,7 @@ export default function CampaignForm() {
       });
 
       toast({
-        title: "¡Éxito!",
+        title: "¡Campaña creada!",
         description: "La campaña ha sido creada exitosamente.",
         variant: "default",
       });
@@ -318,15 +400,15 @@ export default function CampaignForm() {
     } catch (error) {
       logError("Error creating campaign", error);
 
-      toast({
-        title: "Error",
-        description: "Ocurrió un problema al crear la campaña.",
-        variant: "destructive",
-      });
-
-      let errorMessage = "Error al crear la campaña";
+      let errorMessage = "Ocurrió un problema al crear la campaña.";
       if (error instanceof Error) {
-        errorMessage = error.message;
+        if (error.message.includes("network")) {
+          errorMessage = "Error de conexión. Verifica tu internet e inténtalo de nuevo.";
+        } else if (error.message.includes("validation")) {
+          errorMessage = "Error de validación. Revisa los datos ingresados.";
+        } else {
+          errorMessage = error.message;
+        }
 
         logError("Form state at time of error", {
           formValues: form.getValues(),
@@ -335,6 +417,12 @@ export default function CampaignForm() {
           isSubmitting: form.formState.isSubmitting,
         });
       }
+
+      toast({
+        title: "Error al crear campaña",
+        description: errorMessage,
+        variant: "destructive",
+      });
 
       form.setError("root", {
         message: errorMessage,
@@ -347,11 +435,11 @@ export default function CampaignForm() {
   const handleAddImage = () => {
     const fileInput = document.createElement("input");
     fileInput.type = "file";
-    fileInput.accept = "image/*";
+    fileInput.accept = "image/*,image/heic,image/heif";
     fileInput.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
-        handleCarouselImageSelect(file);
+        await handleCarouselImageSelect(file);
       }
     };
     fileInput.click();
